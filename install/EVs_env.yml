@@ -1,0 +1,49 @@
+name: EVs_prueba
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python>=3.6
+  - salmon>=1.4       # Una version < 1 hace que falle
+  - picard=2.25.6     # Otras versiones entran en conflicto con java
+  - openjdk=11.0.9.1  # Si usas < 11.0.3.1 no carga los archivos
+  - bowtie2=2.4.5
+#  - centrifuge>=1.0.4
+  - recentrifuge
+  - star
+  - bbmap
+  - fq
+  - fastqc
+  - sortmerna
+  - hisat2
+  - stringtie
+  - bedtools
+  - kraken2
+  - krakenuniq
+  - krakentools
+  - bracken
+  - taxpasta
+  - multiqc
+  - krona
+  - falco
+  - subread
+  - qualimap
+  - ucsc-bedclip
+  - rseqc
+  - ucsc-bedgraphtobigwig
+  - minimap2
+  - adapterremoval
+  - porechop
+  - filtlong
+  - kaiju
+  - diamond
+  - fastp
+  - pip:
+    - samtools=1.17     # Versiones menores fallan porque no hay algun script	
+    - umi_tools
+    - pysam
+    - cutadapt
+    - MetaPhlAn
+    
+    
