@@ -5,5 +5,7 @@ The structure of the repo is:
 ```
 data                         | .fastq files (raw or processed and relevant)
 database                     | Files necesary for database creation
-install                      | Files to prepare the environment  
+src                          | Source files   
+|                                               
+-- install                   | Files to prepare the environment  
 ```
