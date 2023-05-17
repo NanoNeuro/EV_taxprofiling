@@ -2,3 +2,6 @@
 data/*.fastq.gz
 */*.xlsx
 */*.xlsx#
+results_*/*
+database/*
+work/*
