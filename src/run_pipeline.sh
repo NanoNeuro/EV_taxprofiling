@@ -13,7 +13,7 @@ nextflow run \
     nf-core/rnaseq \
     -r 3.11.2 \
     -profile docker \
-    --input $CWD/samples_prueba.csv \
+    --input $CWD/samples_rnaseq.csv \
     --outdir results_rnaseq \
     --aligner star_salmon \
     --skip_bbsplit \
