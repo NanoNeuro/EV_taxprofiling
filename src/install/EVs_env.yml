@@ -20,7 +20,7 @@ dependencies:
   - stringtie
   - bedtools
   - kraken2
-  - krakenuniq
+  - krakenuniq=1.0.2
   - krakentools
   - bracken
   - taxpasta
@@ -39,7 +39,6 @@ dependencies:
   - kaiju
   - diamond
   - fastp
-  - metaphlan
   - pip:
       - samtools=1.17 # Versiones menores fallan porque no hay algun script
       - umi_tools
