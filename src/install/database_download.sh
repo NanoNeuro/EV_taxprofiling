@@ -34,6 +34,3 @@ centrifuge-build -p 4 --conversion-table $DATABASE_DIR/centrifuge/seqid2taxid.ma
 
 # MetaPhlan creates the index on the run, so no download is needed!?
 metaphlan --install --bowtie2db $DATABASE_DIR/metaphlan
-# You may also need to download the following files
-wget -L http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/mpa_vOct22_CHOCOPhlAnSGB_202212.md5 -O $DATABASE_DIR/metaphlan/mpa_vOct22_CHOCOPhlAnSGB_202212_bt2.md5
-wget -L http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/mpa_vOct22_CHOCOPhlAnSGB_202212.tar -O $DATABASE_DIR/metaphlan/mpa_vOct22_CHOCOPhlAnSGB_202212_bt2.tar
