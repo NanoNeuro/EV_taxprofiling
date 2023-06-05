@@ -6,8 +6,10 @@ DATABASE_DIR="$CWD/database"
 NUM_CPUS=35
 NUM_RAM='364.GB'
 MAX_TIME='500.h'
-POOL_NAME='POOL3'
 KRAKEN2_CONDIFENDE=0.7
+
+POOL_NAME='POOL3'
+
 
 
 # 1) -profile  usar docker y, como last resort, conda
@@ -48,63 +50,140 @@ nextflow run \
     --databases database.csv \
     --run_kraken2 --run_bracken --run_metaphlan3
 
+
+
+
+
+# KAIJU (uno es de refseq y otro de fungi, veremos como juntarlos jejeje)
+mkdir -p $RESULTS_PROFILING/kaiju
+NUM_CPUS=35
+for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
+do 
+    echo "DOING SAMPLE $POOL_NAME WITH KAIJU!"
+    kaiju  -t $DATABASE_DIR/kaiju/nodes.dmp \
+       -f $DATABASE_DIR/kaiju/kaiju_db_refseq.fmi \
+       -i $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz \
+       -j $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz \
+       -z $NUM_CPUS \
+       -o $RESULTS_PROFILING/kaiju/$POOL_NAME.refseq.out 
+
+    kaiju  -t $DATABASE_DIR/kaiju/nodes.dmp \
+        -f $DATABASE_DIR/kaiju/kaiju_db_fungi.fmi \
+        -i $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz \
+        -j $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz \
+        -z $NUM_CPUS \
+        -o $RESULTS_PROFILING/kaiju/$POOL_NAME.fungi.out 
+
+    sort -k2,2 $RESULTS_PROFILING/kaiju/$POOL_NAME.refseq.out > $RESULTS_PROFILING/kaiju/$POOL_NAME.refseq.sorted.out
+    sort -k2,2 $RESULTS_PROFILING/kaiju/$POOL_NAME.fungi.out > $RESULTS_PROFILING/kaiju/$POOL_NAME.fungi.sorted.out
+
+    kaiju-mergeOutputs -i $RESULTS_PROFILING/kaiju/$POOL_NAME.refseq.sorted.out \
+                    -j $RESULTS_PROFILING/kaiju/$POOL_NAME.fungi.sorted.out \
+                    -c 'lca' -t $DATABASE_DIR/kaiju/nodes.dmp \
+                    -o $RESULTS_PROFILING/kaiju/$POOL_NAME.merged.out
+
+    rm $RESULTS_PROFILING/kaiju/$POOL_NAME.refseq.out $RESULTS_PROFILING/kaiju/$POOL_NAME.fungi.out \
+       $RESULTS_PROFILING/kaiju/$POOL_NAME.refseq.sorted.out $RESULTS_PROFILING/kaiju/$POOL_NAME.fungi.sorted.out
+
+    kaiju2table -t $DATABASE_DIR/kaiju/nodes.dmp \
+                -n $DATABASE_DIR/kaiju/names.dmp \
+                -r species \
+                -c 10 \
+                -e \
+                -l superkingdom,phylum,class,species \
+                -o $RESULTS_PROFILING/kaiju/$POOL_NAME.summary.tsv \
+                $RESULTS_PROFILING/kaiju/$POOL_NAME.merged.out 
+done
+
+
+
+# KRAKEN 2
 mkdir -p $RESULTS_PROFILING/kraken_2
-kraken2 -db $DATABASE_DIR/kraken_2 \
-        --threads 8 \
-        --report $RESULTS_PROFILING/kraken_2/$POOL_NAME.report \
-        --classified-out $RESULTS_PROFILING/kraken_2/$POOL_NAME.classified#.fastq \
-        --unclassified-out $RESULTS_PROFILING/kraken_2/$POOL_NAME.unclassified#.fastq \
-        --output $RESULTS_PROFILING/kraken_2/$POOL_NAME.output \
-        --confidence $KRAKEN2_CONDIFENDE \
-        --gzip-compressed \
-        --paired \
-        $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz \
-        $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz 
+for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
+do 
+    echo "DOING SAMPLE $POOL_NAME WITH KRAKEN2!"
+    kraken2 -db $DATABASE_DIR/kraken_2 \
+            --threads $NUM_CPUS \
+            --report $RESULTS_PROFILING/kraken_2/$POOL_NAME.report \
+            --classified-out $RESULTS_PROFILING/kraken_2/$POOL_NAME.classified#.fastq \
+            --unclassified-out $RESULTS_PROFILING/kraken_2/$POOL_NAME.unclassified#.fastq \
+            --output $RESULTS_PROFILING/kraken_2/$POOL_NAME.output \
+            --confidence $KRAKEN2_CONDIFENDE \
+            --gzip-compressed \
+            --paired \
+            $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz \
+            $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz 
 
-gzip $RESULTS_PROFILING/kraken_2/$POOL_NAME.classified_1.fastq \
-     $RESULTS_PROFILING/kraken_2/$POOL_NAME.classified_2.fastq \
-     $RESULTS_PROFILING/kraken_2/$POOL_NAME.unclassified_1.fastq \
-     $RESULTS_PROFILING/kraken_2/$POOL_NAME.unclassified_2.fastq
-        
+    gzip $RESULTS_PROFILING/kraken_2/$POOL_NAME.classified_1.fastq \
+        $RESULTS_PROFILING/kraken_2/$POOL_NAME.classified_2.fastq \
+        $RESULTS_PROFILING/kraken_2/$POOL_NAME.unclassified_1.fastq \
+        $RESULTS_PROFILING/kraken_2/$POOL_NAME.unclassified_2.fastq
+done
 
 
+
+# CENTRIFUGE
+mkdir -p $RESULTS_PROFILING/centrifuge
+NUM_CPUS=8
+for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
+do 
+    echo "DOING SAMPLE $POOL_NAME WITH CENTRIFUGE!"
+    centrifuge \
+            -x $DATABASE_DIR/centrifuge/p+h+v \
+            -1 $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz \
+            -2 $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz \
+            -S  $RESULTS_PROFILING/centrifuge/$POOL_NAME.classification \
+            --report-file  $RESULTS_PROFILING/centrifuge/$POOL_NAME.report.txt \
+            --threads $NUM_CPUS
+done
+
+
+# KRAKENUNIQ
+mkdir -p $RESULTS_PROFILING/krakenuniq
+NUM_CPUS=30
+
+for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
+do 
+    echo "DOING SAMPLE $POOL_NAME WITH KRAKENUNIQ!"
+    krakenuniq  -db $DATABASE_DIR/krakenuniq \
+                --preload \
+                --threads 8 \
+                --report-file $RESULTS_PROFILING/krakenuniq/$POOL_NAME.report \
+                --classified-out $RESULTS_PROFILING/krakenuniq/$POOL_NAME.classified.fastq \
+                --unclassified-out $RESULTS_PROFILING/krakenuniq/$POOL_NAME.unclassified.fastq \
+                --output $RESULTS_PROFILING/krakenuniq/$POOL_NAME.output \
+                --paired \
+                $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz \
+                $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz 
+    
+    gzip $RESULTS_PROFILING/krakenuniq/$POOL_NAME.classified.fastq \
+        $RESULTS_PROFILING/krakenuniq/$POOL_NAME.unclassified.fastq 
+done
+
+
+
+
+
+
+# DISCARDED!!!!
 ## Metaphlan
 mkdir -p $RESULTS_PROFILING/metaphlan
-metaphlan  $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz,$RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz \
-           --input_type fastq \
-           --index $DATABASE_DIR/metaphlan/mpa_vOct22_CHOCOPhlAnSGB_202212 \
-           -t rel_ab_w_read_stats \
-           -o $RESULTS_PROFILING/metaphlan/$POOL_NAME.report.txt \
-           --nproc 5 \
-           --bowtie2out $RESULTS_PROFILING/metaphlan/bowtie2out \
-           --bowtie2db $DATABASE_DIR/metaphlan/mpa_vOct22_CHOCOPhlAnSGB_202212 \
-           --mpa3 \
-           --add_viruses
+NUM_CPUS=30
 
-metaphlan  $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz \
-           --input_type fastq \
-           --index $DATABASE_DIR/metaphlan/mpa_v31_CHOCOPhlAn_201901 \
-           -t rel_ab_w_read_stats \
-           -o $RESULTS_PROFILING/metaphlan/$POOL_NAME.report.txt \
-           --nproc 5 \
-           --bowtie2out $RESULTS_PROFILING/metaphlan/bowtie2out \
-           --bowtie2db $DATABASE_DIR/metaphlan/mpa_v31_CHOCOPhlAn_201901 
+for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
+do 
+    echo "DOING SAMPLE $POOL_NAME WITH METAPHLAN!"
+    metaphlan  $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz,$RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz \
+            --input_type fastq \
+            --index mpa_vOct22_CHOCOPhlAnSGB_202212 \
+            -t rel_ab_w_read_stats \
+            -o $RESULTS_PROFILING/metaphlan/$POOL_NAME.report.txt \
+            --nproc 5 \
+            --bowtie2out $RESULTS_PROFILING/metaphlan/$POOL_NAME.bt2.out \
+            --bowtie2db $DATABASE_DIR/metaphlan \
+            --add_viruses
+done
 
-# Centrigfuge  #IGUAL HAY QUE METER SAMPLE SHEET
-# prepare sheet file
-echo -e "2\t$RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz\
-           \t$RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz\
-           \t$RESULTS_PROFILING/metaphlan/$POOL_NAME.classification\
-           \t$RESULTS_PROFILING/metaphlan/$POOL_NAME.report.txt" >> $CWD/centrifuge.config
-
-
-centrifuge \
-        -x $DATABASE_DIR/centrifuge/phv/phv \
-        -m1 $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz \
-        -m2 $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz \
-        -S  $RESULTS_PROFILING/metaphlan/$POOL_NAME.classification \
-        --report-file  $RESULTS_PROFILING/metaphlan/$POOL_NAME.report.txt \
-        --threads 8 
 
 
 

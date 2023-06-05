@@ -5,3 +5,4 @@ data/*.fastq.gz
 results_*/*
 database/*
 work/*
+*.gbff.gz
