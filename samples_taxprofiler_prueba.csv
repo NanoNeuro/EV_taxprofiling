@@ -1,2 +1,0 @@
-sample,run_accession,instrument_platform,fastq_1,fastq_2,fasta
-POOL3,run1,ILLUMINA,results_rnaseq/star_salmon/unmapped/POOL3.unmapped_1.fastq.gz,results_rnaseq/star_salmon/unmapped/POOL3.unmapped_2.fastq.gz,

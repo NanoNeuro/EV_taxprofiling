@@ -1,6 +1,6 @@
 sample,fastq_1,fastq_2,strandedness
 POOL1,data/18134-05-01_S117_L004_R1_001.fastq.gz,data/18134-05-01_S117_L004_R2_001.fastq.gz,auto
-POOL2,data/18134-05-01_S118_L004_R1_001.fastq.gz,data/18134-05-01_S118_L004_R2_001.fastq.gz,auto
+POOL2,data/18134-05-02_S118_L004_R1_001.fastq.gz,data/18134-05-02_S118_L004_R2_001.fastq.gz,auto
 POOL3,data/18134R-07-Pool3_S193_L008_R1_001.fastq.gz,data/18134R-07-Pool3_S193_L008_R2_001.fastq.gz,auto
 POOL4,data/18134R-07-Pool4_S198_L008_R1_001.fastq.gz,data/18134R-07-Pool4_S198_L008_R2_001.fastq.gz,auto
 POOL5,data/18134R-07-Pool5_S194_L008_R1_001.fastq.gz,data/18134R-07-Pool5_S194_L008_R2_001.fastq.gz,auto
