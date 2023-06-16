@@ -3,13 +3,14 @@ CWD='/media/seth/SETH_DATA/Biodonostia_David/EVs'
 RESULTS_RNASEQ="$CWD/results_rnaseq"
 RESULTS_PROFILING="$CWD/results_profiling"
 DATABASE_DIR="$CWD/database"
-NUM_CPUS=35
+NUM_CPUS=10
 NUM_RAM='364.GB'
 MAX_TIME='500.h'
-KRAKEN2_CONDIFENDE=0.7
+KRAKEN2_CONDIFENDE=0.85
 
 POOL_NAME='POOL3'
-
+MINIMUM_LENGTH=33
+E_VALUE=0.001
 
 
 # 1) -profile  usar docker y, como last resort, conda
@@ -56,7 +57,7 @@ nextflow run \
 
 # KAIJU (uno es de refseq y otro de fungi, veremos como juntarlos jejeje)
 mkdir -p $RESULTS_PROFILING/kaiju
-NUM_CPUS=35
+
 for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
 do 
     echo "DOING SAMPLE $POOL_NAME WITH KAIJU!"
@@ -64,14 +65,14 @@ do
        -f $DATABASE_DIR/kaiju/kaiju_db_refseq.fmi \
        -i $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz \
        -j $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz \
-       -z $NUM_CPUS \
+       -z $NUM_CPUS -E $E_VALUE -m $MINIMUM_LENGTH \
        -o $RESULTS_PROFILING/kaiju/$POOL_NAME.refseq.out 
 
     kaiju  -t $DATABASE_DIR/kaiju/nodes.dmp \
         -f $DATABASE_DIR/kaiju/kaiju_db_fungi.fmi \
         -i $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz \
         -j $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz \
-        -z $NUM_CPUS \
+        -z $NUM_CPUS -E $E_VALUE -m $MINIMUM_LENGTH\
         -o $RESULTS_PROFILING/kaiju/$POOL_NAME.fungi.out 
 
     sort -k2,2 $RESULTS_PROFILING/kaiju/$POOL_NAME.refseq.out > $RESULTS_PROFILING/kaiju/$POOL_NAME.refseq.sorted.out
@@ -90,7 +91,7 @@ do
                 -r species \
                 -c 10 \
                 -e \
-                -l superkingdom,phylum,class,species \
+                -p \
                 -o $RESULTS_PROFILING/kaiju/$POOL_NAME.summary.tsv \
                 $RESULTS_PROFILING/kaiju/$POOL_NAME.merged.out 
 done
@@ -99,6 +100,7 @@ done
 
 # KRAKEN 2
 mkdir -p $RESULTS_PROFILING/kraken_2
+
 for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
 do 
     echo "DOING SAMPLE $POOL_NAME WITH KRAKEN2!"
@@ -124,7 +126,7 @@ done
 
 # CENTRIFUGE
 mkdir -p $RESULTS_PROFILING/centrifuge
-NUM_CPUS=8
+
 for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
 do 
     echo "DOING SAMPLE $POOL_NAME WITH CENTRIFUGE!"
@@ -134,13 +136,23 @@ do
             -2 $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz \
             -S  $RESULTS_PROFILING/centrifuge/$POOL_NAME.classification \
             --report-file  $RESULTS_PROFILING/centrifuge/$POOL_NAME.report.txt \
-            --threads $NUM_CPUS
+            --threads $NUM_CPUS --qc-filter --min-hitlen $MINIMUM_LENGTH 
+
+    centrifuge-kreport \
+        -x $DATABASE_DIR/centrifuge/p+h+v \
+        --min-length $MINIMUM_LENGTH \
+        $RESULTS_PROFILING/centrifuge/$POOL_NAME.classification >> $RESULTS_PROFILING/centrifuge/$POOL_NAME.kreport
+done
+
+
+for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
+do 
+
 done
 
 
 # KRAKENUNIQ
 mkdir -p $RESULTS_PROFILING/krakenuniq
-NUM_CPUS=30
 
 for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
 do 
@@ -152,7 +164,7 @@ do
                 --classified-out $RESULTS_PROFILING/krakenuniq/$POOL_NAME.classified.fastq \
                 --unclassified-out $RESULTS_PROFILING/krakenuniq/$POOL_NAME.unclassified.fastq \
                 --output $RESULTS_PROFILING/krakenuniq/$POOL_NAME.output \
-                --paired \
+                --paired --hll-precision 14\
                 $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz \
                 $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz 
     
@@ -163,12 +175,8 @@ done
 
 
 
-
-
-# DISCARDED!!!!
 ## Metaphlan
 mkdir -p $RESULTS_PROFILING/metaphlan
-NUM_CPUS=30
 
 for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
 do 
@@ -178,12 +186,47 @@ do
             --index mpa_vOct22_CHOCOPhlAnSGB_202212 \
             -t rel_ab_w_read_stats \
             -o $RESULTS_PROFILING/metaphlan/$POOL_NAME.report.txt \
-            --nproc 5 \
+            --nproc $NUM_CPUS \
             --bowtie2out $RESULTS_PROFILING/metaphlan/$POOL_NAME.bt2.out \
             --bowtie2db $DATABASE_DIR/metaphlan \
-            --add_viruses
+            --add_viruses 
 done
 
 
 
 
+
+
+
+# TAXPASTA
+
+## Metaphlan - Taxpasta fails
+
+
+for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
+do
+    # KRAKEN 2
+    taxpasta standardise -p kraken2 --add-name --add-lineage --summarise-at genus --taxonomy $DATABASE_DIR/taxpasta \
+            -o $RESULTS_PROFILING/kraken_2/$POOL_NAME.report.standardised --output-format tsv \
+            $RESULTS_PROFILING/kraken_2/$POOL_NAME.report 
+
+    # KRAKENUNIQ
+    ## Remove a species that gives an error
+    grep -v "2927082" $RESULTS_PROFILING/krakenuniq/$POOL_NAME.report > $RESULTS_PROFILING/krakenuniq/$POOL_NAME.report.pretaxpasta
+    taxpasta standardise -p krakenuniq --add-name --add-lineage --summarise-at genus --taxonomy $DATABASE_DIR/taxpasta \
+            -o $RESULTS_PROFILING/krakenuniq/$POOL_NAME.report.standardised --output-format tsv \
+            $RESULTS_PROFILING/krakenuniq/$POOL_NAME.report.pretaxpasta 
+
+    # KAIJU
+    taxpasta standardise -p kaiju --add-name --add-lineage --summarise-at genus --taxonomy $DATABASE_DIR/taxpasta \
+            -o $RESULTS_PROFILING/kaiju/$POOL_NAME.report.standardised --output-format tsv \
+            $RESULTS_PROFILING/kaiju/$POOL_NAME.summary.tsv 
+done
+
+for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
+do
+    grep -vE "119065|578822|186813|210592|78537|670506|663587" $RESULTS_PROFILING/centrifuge/$POOL_NAME.kreport > $RESULTS_PROFILING/centrifuge/$POOL_NAME.kreport.pretaxpasta
+    taxpasta standardise -p centrifuge --add-name --add-lineage --summarise-at genus --taxonomy $DATABASE_DIR/taxpasta \
+            -o $RESULTS_PROFILING/centrifuge/$POOL_NAME.report.standardised --output-format tsv \
+            $RESULTS_PROFILING/centrifuge/$POOL_NAME.kreport.pretaxpasta
+done

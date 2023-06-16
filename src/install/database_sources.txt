@@ -1,7 +1,7 @@
 #! /bin/bash
-DIR_EVS='/media/seth/SETH_DATA/Biodonostia_David/EVs'
-DIR_PROGRAMS='~/Programs'
-DIR_DOWNLOADS='~/Downloads'
+DIR_EVS='/data/Proyectos/EVs'
+DIR_PROGRAMS="/home/nanoneuro/Programs"
+DIR_DOWNLOADS="/home/nanoneuro/Downloads"
 
 
 # Install apt programs

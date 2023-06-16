@@ -1,4 +1,4 @@
-name: EVs_prueba
+name: EVs
 channels:
   - conda-forge
   - bioconda
@@ -9,7 +9,7 @@ dependencies:
   - picard=2.25.6 # Otras versiones entran en conflicto con java
   - openjdk=11.0.9.1 # Si usas < 11.0.3.1 no carga los archivos
   - bowtie2=2.4.5
-  #  - centrifuge>=1.0.4
+  - krakenuniq=1.0.2
   - recentrifuge
   - star
   - bbmap
@@ -20,7 +20,6 @@ dependencies:
   - stringtie
   - bedtools
   - kraken2
-  - krakenuniq=1.0.2
   - krakentools
   - bracken
   - taxpasta
@@ -40,7 +39,6 @@ dependencies:
   - diamond
   - fastp
   - pip:
-      - samtools=1.17 # Versiones menores fallan porque no hay algun script
       - umi_tools
       - pysam
       - cutadapt
