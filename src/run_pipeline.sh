@@ -1,27 +1,28 @@
 VERSION_ENSEMBLE_GENOME=109
-CWD='/media/seth/SETH_DATA/Biodonostia_David/EVs'
+CWD='/data/Proyectos/EVs'
 RESULTS_RNASEQ="$CWD/results_rnaseq"
 RESULTS_PROFILING="$CWD/results_profiling"
 DATABASE_DIR="$CWD/database"
 NUM_CPUS=10
-NUM_RAM='364.GB'
+NUM_RAM='120.GB'
 MAX_TIME='500.h'
 KRAKEN2_CONDIFENDE=0.85
 
 POOL_NAME='POOL3'
-MINIMUM_LENGTH=33
+MINIMUM_LENGTH=35
 E_VALUE=0.001
 
 
+# RNA SEQ PIPELINE - para mappear a humano
 # 1) -profile  usar docker y, como last resort, conda
-# 2) --
-# 3) Incluir --star_index cuando se haya indexado por primera vez (HAY QUE MOVER EL ÍNDICE A LA CARPETA!!!)
+# 2) Incluir --star_index cuando se haya indexado por primera vez (HAY QUE MOVER EL ÍNDICE A LA CARPETA!!!)
 # We skip qualimap becau it gets to a timeout error and it is not really necessary for the analysis
 
+cd $CWD
 
 nextflow run \
     nf-core/rnaseq \
-    -r 3.11.2 \
+    -r 3.12.0 \
     -profile docker \
     -resume \
     --input $CWD/samples_rnaseq.csv \
@@ -36,15 +37,30 @@ nextflow run \
     --max_cpus $NUM_CPUS \
     --max_memory $NUM_RAM \
     --max_time $MAX_TIME \
-    --fasta $DATABASE_DIR/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz \
-    --gtf $DATABASE_DIR/Homo_sapiens.GRCh38.$VERSION_ENSEMBLE_GENOME.gtf.gz \
-    --save_reference 
+    --fasta $DATABASE_DIR/genome/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa \
+    --gtf $DATABASE_DIR/genome/Homo_sapiens.GRCh38.$VERSION_ENSEMBLE_GENOME.gtf \
+    --save_reference
+
+
+# 2nd RNA SEQ PIPELINE USING BOWTIE2 AND CHM13
+bowtie2-build -f $DATABASE_DIR/genome/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna $DATABASE_DIR/genome/index/bowtie2-chm13
+for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
+do 
+    echo "ALIGNING $POOL_NAME WITH BOWTIE2!"
+done
+
+
+
+
+
+
+
 
 
 # RUN GENERICO - No lo usamos porque (1) los reads están ya procesados, (2) algunos programas no funcionan o (3) sus versiones son antiguas
 nextflow run \
     nf-core/taxprofiler \
-    -r 1.0.1 \
+    -r 1.1.1 \
     -profile docker \
     --input samples_taxprofiler_prueba.csv \
     --outdir results_taxprofiling \

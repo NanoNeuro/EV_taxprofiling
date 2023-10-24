@@ -1,5 +1,5 @@
 #!/bin/bash
-CWD='/media/seth/SETH_DATA/Biodonostia_David/EVs'
+CWD='/data/Proyectos/EVs'
 DATABASE_DIR="$CWD/database"
 
 VERSION=109
@@ -7,20 +7,30 @@ wget -L ftp://ftp.ensembl.org/pub/release-$VERSION/fasta/homo_sapiens/dna/Homo_s
 wget -L ftp://ftp.ensembl.org/pub/release-$VERSION/gtf/homo_sapiens/Homo_sapiens.GRCh38.$VERSION.gtf.gz -P $DATABASE_DIR
 
 
-# Kaiju
+
+# Human CHM13 genome
+cd $DATABASE_DIR/genome
+curl -OJX GET "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/genome/accession/GCF_009914755.1/download?include_annotation_type=GENOME_FASTA&filename=GCF_009914755.1.zip" -H "Accept: application/zip"
+# Extract the .fna file!
+unzip $DATABASE_DIR/genome/GCF_009914755.1.zip -d $DATABASE_DIR/genome
+mv $DATABASE_DIR/genome/ncbi_dataset/data/GCF_009914755.1/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna $DATABASE_DIR/genome/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna
+rm -r $DATABASE_DIR/genome/ncbi_dataset
+
+
+
+# Kaiju [DOES NOT CONTAIN HUMAN]
 mkdir -p $DATABASE_DIR/kaiju
 cd $DATABASE_DIR/kaiju
-wget -L https://kaiju.binf.ku.dk/database/kaiju_db_refseq_2022-03-23.tgz -O $DATABASE_DIR/kaiju/kaiju_refseq.tgz
+wget -L https://kaiju-idx.s3.eu-central-1.amazonaws.com/2023/kaiju_db_refseq_2023-05-23.tgz -O $DATABASE_DIR/kaiju/kaiju_refseq.tgz
 tar xzvf $DATABASE_DIR/kaiju/kaiju_refseq.tgz -C $DATABASE_DIR/kaiju
-wget -L https://kaiju.binf.ku.dk/database/kaiju_db_fungi_2022-03-29.tgz -O $DATABASE_DIR/kaiju/kaiju_fungi.tgz
+wget -L https://kaiju-idx.s3.eu-central-1.amazonaws.com/2023/kaiju_db_fungi_2023-05-26.tgz -O $DATABASE_DIR/kaiju/kaiju_fungi.tgz
 tar xzvf $DATABASE_DIR/kaiju/kaiju_fungi.tgz -C $DATABASE_DIR/kaiju
 
 
 
 
 
-
-# Kraken 2  FROM https://benlangmead.github.io/aws-indexes/k2
+# Kraken 2  FROM https://benlangmead.github.io/aws-indexes/k2  [CONTAINS HUMAN]
 mkdir -p $DATABASE_DIR/kraken_2
 wget -L https://genome-idx.s3.amazonaws.com/kraken/k2_pluspf_20230314.tar.gz -O $DATABASE_DIR/kraken_2/kraken_2_db.tar.gz
 wget -L https://genome-idx.s3.amazonaws.com/kraken/pluspf_20230314/inspect.txt -O $DATABASE_DIR/kraken_2/kraken_2_db_inspect.txt
@@ -31,8 +41,7 @@ tar xvf $DATABASE_DIR/kraken_2/kraken_2_db.tar.gz -C $DATABASE_DIR/kraken_2
 
 
 
-
-# Krakenuniq https://github.com/fbreitwieser/krakenuniq
+# Krakenuniq https://github.com/fbreitwieser/krakenuniq  [CONTAINS HUMAN]
 mkdir -p $DATABASE_DIR/krakenuniq
 aws s3 cp s3://genome-idx/kraken/uniq/krakendb-2022-06-16-STANDARD/kuniq_standard_minus_kdb.20220616.tgz $DATABASE_DIR/krakenuniq/kuniq_standard_minus_kdb.20220616.tgz
 aws s3 cp s3://genome-idx/kraken/uniq/krakendb-2022-06-16-STANDARD/database.kdb $DATABASE_DIR/krakenuniq/database.kdb
@@ -43,9 +52,12 @@ tar xvf $DATABASE_DIR/krakenuniq/kuniq_standard_minus_kdb.20220616.tgz -C $DATAB
 
 
 
-# Centrifuge FROM https://ccb.jhu.edu/software/centrifuge/
+# Centrifuge FROM https://ccb.jhu.edu/software/centrifuge/  [CONTAINS HUMAN]
 mkdir -p $DATABASE_DIR/centrifuge
 aws s3 cp s3://genome-idx/centrifuge/p+h+v.tar.gz $DATABASE_DIR/centrifuge/centrifuge.tar.gz
+tar -xvf $DATABASE_DIR/centrifuge/centrifuge.tar.gz -C $DATABASE_DIR/centrifuge
+
+
 
 # THIS CODE BELOW WAS EXTREMELY SLOW AND I WAS NOT SURE THAT THE DATABASE WOULD FIT IN RAM
 # # Centrifuge is built with the same components as krakenuniq. So, we are going to run first krakenuniq and the use their files
