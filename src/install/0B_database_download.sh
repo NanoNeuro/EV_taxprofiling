@@ -30,7 +30,7 @@ tar xzvf $DATABASE_DIR/kaiju/kaiju_fungi.tgz -C $DATABASE_DIR/kaiju
 
 
 
-# Kraken 2  FROM https://benlangmead.github.io/aws-indexes/k2  [CONTAINS HUMAN]
+# Kraken 2  FROM https://benlangmead.github.io/aws-indexes/k2  [HUMAN | ARCHAEA | BACTERIA | VIRAL | PLASMID | PROTOZOA | FUNGI]
 mkdir -p $DATABASE_DIR/kraken_2
 wget -L https://genome-idx.s3.amazonaws.com/kraken/k2_pluspf_20230314.tar.gz -O $DATABASE_DIR/kraken_2/kraken_2_db.tar.gz
 wget -L https://genome-idx.s3.amazonaws.com/kraken/pluspf_20230314/inspect.txt -O $DATABASE_DIR/kraken_2/kraken_2_db_inspect.txt
@@ -41,7 +41,7 @@ tar xvf $DATABASE_DIR/kraken_2/kraken_2_db.tar.gz -C $DATABASE_DIR/kraken_2
 
 
 
-# Krakenuniq https://github.com/fbreitwieser/krakenuniq  [CONTAINS HUMAN]
+# Krakenuniq https://github.com/fbreitwieser/krakenuniq  [HUMAN | ARCHAEA | BACTERIA | VIRAL | UNIVEC_CORE]
 mkdir -p $DATABASE_DIR/krakenuniq
 aws s3 cp s3://genome-idx/kraken/uniq/krakendb-2022-06-16-STANDARD/kuniq_standard_minus_kdb.20220616.tgz $DATABASE_DIR/krakenuniq/kuniq_standard_minus_kdb.20220616.tgz
 aws s3 cp s3://genome-idx/kraken/uniq/krakendb-2022-06-16-STANDARD/database.kdb $DATABASE_DIR/krakenuniq/database.kdb
@@ -49,13 +49,10 @@ tar xvf $DATABASE_DIR/krakenuniq/kuniq_standard_minus_kdb.20220616.tgz -C $DATAB
 
 
 
-
-
-
-# Centrifuge FROM https://ccb.jhu.edu/software/centrifuge/  [CONTAINS HUMAN]
+# Centrifuge FROM https://ccb.jhu.edu/software/centrifuge/  [HUMAN | ARCHAEA? | BACTERIA | VIRAL | FUNGI?] - NCBI nucleotide non-redundant sequences
 mkdir -p $DATABASE_DIR/centrifuge
-aws s3 cp s3://genome-idx/centrifuge/p+h+v.tar.gz $DATABASE_DIR/centrifuge/centrifuge.tar.gz
-tar -xvf $DATABASE_DIR/centrifuge/centrifuge.tar.gz -C $DATABASE_DIR/centrifuge
+aws s3 cp s3://genome-idx/centrifuge/nt_2018_3_3.tar.gz $DATABASE_DIR/centrifuge/nt_2018_3_3.tar.gz
+tar -xvf $DATABASE_DIR/centrifuge/nt_2018_3_3.tar.gz -C $DATABASE_DIR/centrifuge
 
 
 
