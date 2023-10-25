@@ -31,6 +31,7 @@ nextflow run \
     --skip_bbsplit \
     --star_index $DATABASE_DIR/genome/index/star \
     --salmon_index $DATABASE_DIR/genome/index/salmon \
+    --minAssignedFrags 3 \
     --rsem_index $DATABASE_DIR/genome/rsem \
     --save_unaligned \
     --skip_qualimap \
