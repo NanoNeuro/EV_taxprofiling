@@ -6,6 +6,8 @@ VERSION=109
 wget -L ftp://ftp.ensembl.org/pub/release-$VERSION/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz -P $DATABASE_DIR
 wget -L ftp://ftp.ensembl.org/pub/release-$VERSION/gtf/homo_sapiens/Homo_sapiens.GRCh38.$VERSION.gtf.gz -P $DATABASE_DIR
 
+NUM_CPUS=20
+
 
 
 # Human CHM13 genome
@@ -18,6 +20,7 @@ rm -r $DATABASE_DIR/genome/ncbi_dataset
 
 
 
+
 # Kaiju [DOES NOT CONTAIN HUMAN]
 mkdir -p $DATABASE_DIR/kaiju
 cd $DATABASE_DIR/kaiju
@@ -25,6 +28,36 @@ wget -L https://kaiju-idx.s3.eu-central-1.amazonaws.com/2023/kaiju_db_refseq_202
 tar xzvf $DATABASE_DIR/kaiju/kaiju_refseq.tgz -C $DATABASE_DIR/kaiju
 wget -L https://kaiju-idx.s3.eu-central-1.amazonaws.com/2023/kaiju_db_fungi_2023-05-26.tgz -O $DATABASE_DIR/kaiju/kaiju_fungi.tgz
 tar xzvf $DATABASE_DIR/kaiju/kaiju_fungi.tgz -C $DATABASE_DIR/kaiju
+
+
+
+
+
+# Kaiju [WITH HUMAN - FROM BATCH]
+mkdir -p $DATABASE_DIR/kaiju
+cd $DATABASE_DIR/kaiju
+ncbi_param_r=10
+ncbi-genome-download -F protein-fasta -p $NUM_CPUS -r $ncbi_param_r -P archaea,bacteria,fungi,protozoa,viral
+ncbi-genome-download -F protein-fasta -p $NUM_CPUS -r $ncbi_param_r -P vertebrate_mammalian -t "9606,10090"
+
+## Merge the faa files [Non-parallelised]
+zcat refseq/*.faa.gz > combined_faa.faa
+
+## Merge the faa files [Parallelised]
+# Iterate through all .faa files and run zcat processes in parallel  [HACER ESTO BIEN!!!]
+for file in $(find . -type f -name "*.faa.gz"); do
+    zcat "$file" >> "combined.faa" &
+done
+wait
+
+## Download taxdump files
+wget -P . https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
+tar xvf new_taxdump.tar.gz
+
+# 3.5 RUN KAIJU TO MOUNT THE INDEX
+kaiju-mkbwt -n 5 -a ACDEFGHIKLMNPQRSTVWY -infilename combined.faa -o kaiju_combined
+kaiju-mkfmi kaiju_combined
+
 
 
 
@@ -49,10 +82,16 @@ tar xvf $DATABASE_DIR/krakenuniq/kuniq_standard_minus_kdb.20220616.tgz -C $DATAB
 
 
 
+
+
+
 # Centrifuge FROM https://ccb.jhu.edu/software/centrifuge/  [HUMAN | ARCHAEA? | BACTERIA | VIRAL | FUNGI?] - NCBI nucleotide non-redundant sequences
 mkdir -p $DATABASE_DIR/centrifuge
 aws s3 cp s3://genome-idx/centrifuge/nt_2018_3_3.tar.gz $DATABASE_DIR/centrifuge/nt_2018_3_3.tar.gz
 tar -xvf $DATABASE_DIR/centrifuge/nt_2018_3_3.tar.gz -C $DATABASE_DIR/centrifuge
+
+
+
 
 
 
