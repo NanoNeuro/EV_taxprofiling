@@ -11,5 +11,5 @@ POOL9,data/Sample/18134R-07-Pool9_S197_L008_R1_001.fastq.gz,data/Sample/18134R-0
 POOL10,data/Sample/18134R-07-Pool10_S200_L008_R1_001.fastq.gz,data/Sample/18134R-07-Pool10_S200_L008_R2_001.fastq.gz,auto
 POOL11,data/Sample/18134R-07-Pool11_S201_L008_R1_001.fastq.gz,data/Sample/18134R-07-Pool11_S201_L008_R2_001.fastq.gz,auto
 POOL12,data/Sample/18134R-07-Pool12_S202_L008_R1_001.fastq.gz,data/Sample/18134R-07-Pool12_S202_L008_R2_001.fastq.gz,auto
-BLACTIS,data/Control/4Blactis_S1_L001_R1_001.fastq.gz,data/Control/4Blactis_S1_L001_R2_001.fastq.gz,auto
-ACIDOLA,data/Control/6AcidoLA201_S2_L001_R1_001.fastq.gz,data/Control/6AcidoLA201_S2_L001_R2_001.fastq.gz,auto
+BLACTIS,data/Control/4Blactis_S1_L001_R1_001.fastq.gz,data/Control/4Blactis_S1_L001_R2_001.fastq.gz,forward
+ACIDOLA,data/Control/6AcidoLA201_S2_L001_R1_001.fastq.gz,data/Control/6AcidoLA201_S2_L001_R2_001.fastq.gz,forward
