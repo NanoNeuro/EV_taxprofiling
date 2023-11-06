@@ -158,7 +158,6 @@ done
 
 
 
-
 # KRAKEN 2
 mkdir -p $RESULTS_PROFILING/kraken_2
 
@@ -182,6 +181,8 @@ do
         $RESULTS_PROFILING/kraken_2/$POOL_NAME.unclassified_1.fastq \
         $RESULTS_PROFILING/kraken_2/$POOL_NAME.unclassified_2.fastq
 done
+
+
 
 
 
@@ -236,34 +237,9 @@ done
 
 
 
-## Metaphlan
-mkdir -p $RESULTS_PROFILING/metaphlan
-
-for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
-do 
-    echo "DOING SAMPLE $POOL_NAME WITH METAPHLAN!"
-    metaphlan  $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz,$RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz \
-            --input_type fastq \
-            --index $DATABASE_DIR/metaphlan/mpa_vOct22_CHOCOPhlAnSGB_202212 \
-            -t rel_ab_w_read_stats \
-            -o $RESULTS_PROFILING/metaphlan/$POOL_NAME.report.txt \
-            --nproc $NUM_CPUS \
-            --bowtie2out $RESULTS_PROFILING/metaphlan/$POOL_NAME.bt2.out \
-            --bowtie2db $DATABASE_DIR/metaphlan \
-            --add_viruses 
-done
-
-
-
-
-
 
 
 # TAXPASTA
-
-## Metaphlan - Taxpasta fails
-
-
 for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
 do
     # KRAKEN 2

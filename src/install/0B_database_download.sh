@@ -81,37 +81,6 @@ tar -xvf $DATABASE_DIR/centrifuge/nt_2018_3_3.tar.gz -C $DATABASE_DIR/centrifuge
 
 
 
-# MetaPhlan 
-# WARNING!! This configuration may probably fail (not be recognised by metaphlan), although the running configuration 
-# seems to work.
-mkdir -p $DATABASE_DIR/metaphlan
-mkdir -p $DATABASE_DIR/metaphlan/bowtie2
-
-wget -L http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/bowtie2_indexes/mpa_vOct22_CHOCOPhlAnSGB_202212_bt2.md5 \
-     -O $DATABASE_DIR/metaphlan/bowtie2/mpa_vOct22_CHOCOPhlAnSGB_202212_bt2.md5
-wget -L http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/bowtie2_indexes/mpa_vOct22_CHOCOPhlAnSGB_202212_bt2.tar \
-        -O $DATABASE_DIR/metaphlan/bowtie2/mpa_vOct22_CHOCOPhlAnSGB_202212_bt2.tar
-
-wget -L http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/mpa_vOct22_CHOCOPhlAnSGB_202212.md5 \
-        -O $DATABASE_DIR/metaphlan/mpa_vOct22_CHOCOPhlAnSGB_202212.md5
-wget -L http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/mpa_vOct22_CHOCOPhlAnSGB_202212.tar \
-        -O $DATABASE_DIR/metaphlan/mpa_vOct22_CHOCOPhlAnSGB_202212.tar
-wget -L http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/mpa_vOct22_CHOCOPhlAnSGB_202212_marker_info.txt.bz2 \
-        -O $DATABASE_DIR/metaphlan/mpa_vOct22_CHOCOPhlAnSGB_202212_marker_info.txt.bz2
-wget -L http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/mpa_vOct22_CHOCOPhlAnSGB_202212_species.txt.bz2 \
-        -O $DATABASE_DIR/metaphlan/mpa_vOct22_CHOCOPhlAnSGB_202212_species.txt.bz2
-
-tar xf $DATABASE_DIR/metaphlan/bowtie2/mpa_vOct22_CHOCOPhlAnSGB_202212_bt2.tar -C $DATABASE_DIR/metaphlan/bowtie2
-
-
-
-# Bracken
-# We have tried to build bracken databases with all programs (krakenuniq-build, braken2-build) 
-# but there is always some point where it fails. So, considering that bracken2 is not a metaprofiler per se
-# but a "corrector" of metaprofiling results, we will not use it.
-
-
-
 # TAXPASTA
 # Download .dmp files
 mkdir -p $DATABASE_DIR/taxpasta
