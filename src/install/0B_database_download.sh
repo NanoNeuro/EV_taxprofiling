@@ -1,12 +1,12 @@
 #!/bin/bash
 CWD='/data/Proyectos/EVs'
 DATABASE_DIR="$CWD/database"
+NUM_CPUS=20
 
 VERSION=109
 wget -L ftp://ftp.ensembl.org/pub/release-$VERSION/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz -P $DATABASE_DIR
 wget -L ftp://ftp.ensembl.org/pub/release-$VERSION/gtf/homo_sapiens/Homo_sapiens.GRCh38.$VERSION.gtf.gz -P $DATABASE_DIR
 
-NUM_CPUS=20
 
 
 
@@ -21,44 +21,32 @@ rm -r $DATABASE_DIR/genome/ncbi_dataset
 
 
 
-# Kaiju [DOES NOT CONTAIN HUMAN]
+# Kaiju 
+## We will download specific databases (we tried to create one from scratch, but the identifiers in the FASTAs were not the taxon ID but the protein IDs and was a PITA to do the changes), 
+## and we will also create a human one.
 mkdir -p $DATABASE_DIR/kaiju
 cd $DATABASE_DIR/kaiju
 wget -L https://kaiju-idx.s3.eu-central-1.amazonaws.com/2023/kaiju_db_refseq_2023-05-23.tgz -O $DATABASE_DIR/kaiju/kaiju_refseq.tgz
 tar xzvf $DATABASE_DIR/kaiju/kaiju_refseq.tgz -C $DATABASE_DIR/kaiju
+mv $DATABASE_DIR/kaiju/kaiju_db_refseq.fmi $DATABASE_DIR/kaiju/kaiju_refseq.fmi 
+
 wget -L https://kaiju-idx.s3.eu-central-1.amazonaws.com/2023/kaiju_db_fungi_2023-05-26.tgz -O $DATABASE_DIR/kaiju/kaiju_fungi.tgz
 tar xzvf $DATABASE_DIR/kaiju/kaiju_fungi.tgz -C $DATABASE_DIR/kaiju
+mv $DATABASE_DIR/kaiju/kaiju_db_fungi.fmi $DATABASE_DIR/kaiju/kaiju_fungi.fmi 
 
+wget -L https://kaiju-idx.s3.eu-central-1.amazonaws.com/2023/kaiju_db_plasmids_2023-05-26.tgz -O $DATABASE_DIR/kaiju/kaiju_plasmids.tgz
+tar xzvf $DATABASE_DIR/kaiju/kaiju_plasmids.tgz -C $DATABASE_DIR/kaiju
+mv $DATABASE_DIR/kaiju/kaiju_db_plasmids.fmi $DATABASE_DIR/kaiju/kaiju_plasmids.fmi 
 
-
-
-
-# Kaiju [WITH HUMAN - FROM BATCH]
-mkdir -p $DATABASE_DIR/kaiju
-cd $DATABASE_DIR/kaiju
+## Create human database
 ncbi_param_r=10
-ncbi-genome-download -F protein-fasta -p $NUM_CPUS -r $ncbi_param_r -P archaea,bacteria,fungi,protozoa,viral
-ncbi-genome-download -F protein-fasta -p $NUM_CPUS -r $ncbi_param_r -P vertebrate_mammalian -t "9606,10090"
+ncbi-genome-download -F protein-fasta -p $NUM_CPUS -r $ncbi_param_r -P vertebrate_mammalian -t "9606" -R reference
 
-## Merge the faa files [Non-parallelised]
-zcat refseq/*.faa.gz > combined_faa.faa
+# Change headers of fasta to NCBI taxon ID (9606)
+zcat $(find refseq -type f -name '*.faa.gz') | sed 's/^>.*$/>9606/' > combined.faa
 
-## Merge the faa files [Parallelised]
-# Iterate through all .faa files and run zcat processes in parallel  [HACER ESTO BIEN!!!]
-for file in $(find . -type f -name "*.faa.gz"); do
-    zcat "$file" >> "combined.faa" &
-done
-wait
-
-## Download taxdump files
-wget -P . https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
-tar xvf new_taxdump.tar.gz
-
-# 3.5 RUN KAIJU TO MOUNT THE INDEX
-kaiju-mkbwt -n 5 -a ACDEFGHIKLMNPQRSTVWY -infilename combined.faa -o kaiju_combined
-kaiju-mkfmi kaiju_combined
-
-
+kaiju-mkbwt -n $NUM_CPUS -a ACDEFGHIKLMNPQRSTVWY -infilename combined.faa -o kaiju_human
+kaiju-mkfmi kaiju_human
 
 
 
@@ -89,29 +77,6 @@ tar xvf $DATABASE_DIR/krakenuniq/kuniq_standard_minus_kdb.20220616.tgz -C $DATAB
 mkdir -p $DATABASE_DIR/centrifuge
 aws s3 cp s3://genome-idx/centrifuge/nt_2018_3_3.tar.gz $DATABASE_DIR/centrifuge/nt_2018_3_3.tar.gz
 tar -xvf $DATABASE_DIR/centrifuge/nt_2018_3_3.tar.gz -C $DATABASE_DIR/centrifuge
-
-
-
-
-
-
-# THIS CODE BELOW WAS EXTREMELY SLOW AND I WAS NOT SURE THAT THE DATABASE WOULD FIT IN RAM
-# # Centrifuge is built with the same components as krakenuniq. So, we are going to run first krakenuniq and the use their files
-# # to build the centrifuge databe. Also, the download of some of the elements from centrifuge failed, so we make sure that this
-# # one goes well to do it.
-
-# cd $DATABASE_DIR/krakenuniq/library
-# find . -type f -name "*.fna" -exec cat {} \; > $DATABASE_DIR/centrifuge/input-sequences.fna
-
-# ## build centrifuge index 
-# centrifuge-build -p 20 --bmax 83886080 \
-#                  --conversion-table $DATABASE_DIR/krakenuniq/seqid2taxid.map \
-#                  --taxonomy-tree $DATABASE_DIR/krakenuniq/taxonomy/nodes.dmp \
-#                  --name-table $DATABASE_DIR/krakenuniq/taxonomy/names.dmp \
-#                  $DATABASE_DIR/centrifuge/input-sequences.fna abv
-
-#After the index building, all but the *.[123].cf index files may be removed. I.e. the files in the library/ and taxonomy/ directories are no longer needed.
-
 
 
 
