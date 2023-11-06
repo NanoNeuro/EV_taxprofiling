@@ -1,10 +1,11 @@
 VERSION_ENSEMBLE_GENOME=109
 CWD='/data/Proyectos/EVs'
 RESULTS_RNASEQ="$CWD/results_rnaseq"
+RESULTS_BOWTIE2="$CWD/results_bowtie2"
 RESULTS_PROFILING="$CWD/results_profiling"
 DATABASE_DIR="$CWD/database"
-NUM_CPUS=10
-NUM_RAM='120.GB'
+NUM_CPUS=20
+MAX_RAM=85
 MAX_TIME='500.h'
 KRAKEN2_CONDIFENDE=0.85
 
@@ -31,38 +32,37 @@ nextflow run \
     --skip_bbsplit \
     --star_index $DATABASE_DIR/genome/index/star \
     --salmon_index $DATABASE_DIR/genome/index/salmon \
-    --minAssignedFrags 3 \
+    --extra_salmon_quant_args "--minAssignedFrags 1" \
     --rsem_index $DATABASE_DIR/genome/rsem \
     --save_unaligned \
     --skip_qualimap \
+    --skip_pseudo_alignment \
     --max_cpus $NUM_CPUS \
-    --max_memory $NUM_RAM \
+    --max_memory "$MAX_RAM".GB \
     --max_time $MAX_TIME \
     --fasta $DATABASE_DIR/genome/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa \
     --gtf $DATABASE_DIR/genome/Homo_sapiens.GRCh38.$VERSION_ENSEMBLE_GENOME.gtf \
-    --save_reference
+    --save_reference 
 
 
 # 2nd RNA SEQ PIPELINE USING BOWTIE2 AND CHM13
-bowtie2-build -f $DATABASE_DIR/genome/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna $DATABASE_DIR/genome/index/bowtie2-chm13
+bowtie2-build -f $DATABASE_DIR/genome/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna $DATABASE_DIR/genome/index/bowtie2-chm13/bowtie2-chm13
+
+mkdir $RESULTS_BOWTIE2
+
 for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
 do 
     echo "ALIGNING $POOL_NAME WITH BOWTIE2!"
+    bowtie2 -x $DATABASE_DIR/genome/index/bowtie2-chm13/bowtie2-chm13 -1 $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz -2 $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz --very-sensitive -p $NUM_CPUS -S $RESULTS_BOWTIE2/$POOL_NAME.aligned.sam --un-conc-gz $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.gz
 done
-
-
-
-
-
-
 
 
 
 # RUN GENERICO - No lo usamos porque (1) los reads están ya procesados, (2) algunos programas no funcionan o (3) sus versiones son antiguas
 nextflow run \
     nf-core/taxprofiler \
-    -r 1.1.1 \
-    -profile docker \
+    -r 1.1.2 \
+    -profile docker,test \
     --input samples_taxprofiler_prueba.csv \
     --outdir results_taxprofiling \
     --databases database.csv \
@@ -72,46 +72,90 @@ nextflow run \
 
 
 
-# KAIJU (uno es de refseq y otro de fungi, veremos como juntarlos jejeje)
-mkdir -p $RESULTS_PROFILING/kaiju
 
+# KAIJU 
+mkdir -p $RESULTS_PROFILING/kaiju
 for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
 do 
     echo "DOING SAMPLE $POOL_NAME WITH KAIJU!"
-    kaiju  -t $DATABASE_DIR/kaiju/nodes.dmp \
-       -f $DATABASE_DIR/kaiju/kaiju_db_refseq.fmi \
-       -i $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz \
-       -j $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz \
+
+    # Refseq
+    kaiju  -t $DATABASE_DIR/taxpasta/nodes.dmp \
+       -f $DATABASE_DIR/kaiju/kaiju_refseq.fmi \
+       -i $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.1.gz \
+       -j $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.2.gz \
        -z $NUM_CPUS -E $E_VALUE -m $MINIMUM_LENGTH \
        -o $RESULTS_PROFILING/kaiju/$POOL_NAME.refseq.out 
 
-    kaiju  -t $DATABASE_DIR/kaiju/nodes.dmp \
-        -f $DATABASE_DIR/kaiju/kaiju_db_fungi.fmi \
-        -i $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz \
-        -j $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz \
-        -z $NUM_CPUS -E $E_VALUE -m $MINIMUM_LENGTH\
-        -o $RESULTS_PROFILING/kaiju/$POOL_NAME.fungi.out 
+    # Fungi
+    kaiju  -t $DATABASE_DIR/taxpasta/nodes.dmp \
+       -f $DATABASE_DIR/kaiju/kaiju_fungi.fmi \
+       -i $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.1.gz \
+       -j $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.2.gz \
+       -z $NUM_CPUS -E $E_VALUE -m $MINIMUM_LENGTH \
+       -o $RESULTS_PROFILING/kaiju/$POOL_NAME.fungi.out 
 
+    # Plasmid
+    kaiju  -t $DATABASE_DIR/taxpasta/nodes.dmp \
+       -f $DATABASE_DIR/kaiju/kaiju_plasmids.fmi \
+       -i $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.1.gz \
+       -j $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.2.gz \
+       -z $NUM_CPUS -E $E_VALUE -m $MINIMUM_LENGTH \
+       -o $RESULTS_PROFILING/kaiju/$POOL_NAME.plasmid.out 
+
+    # Human
+    kaiju  -t $DATABASE_DIR/taxpasta/nodes.dmp \
+       -f $DATABASE_DIR/kaiju/kaiju_human.fmi \
+       -i $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.1.gz \
+       -j $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.2.gz \
+       -z $NUM_CPUS -E $E_VALUE -m $MINIMUM_LENGTH \
+       -o $RESULTS_PROFILING/kaiju/$POOL_NAME.human.out 
+
+    echo "Sorting entries of $POOL_NAME..."
     sort -k2,2 $RESULTS_PROFILING/kaiju/$POOL_NAME.refseq.out > $RESULTS_PROFILING/kaiju/$POOL_NAME.refseq.sorted.out
     sort -k2,2 $RESULTS_PROFILING/kaiju/$POOL_NAME.fungi.out > $RESULTS_PROFILING/kaiju/$POOL_NAME.fungi.sorted.out
+    sort -k2,2 $RESULTS_PROFILING/kaiju/$POOL_NAME.plasmid.out > $RESULTS_PROFILING/kaiju/$POOL_NAME.plasmid.sorted.out
+    sort -k2,2 $RESULTS_PROFILING/kaiju/$POOL_NAME.human.out > $RESULTS_PROFILING/kaiju/$POOL_NAME.human.sorted.out
 
+    echo "Merging entries of $POOL_NAME..."
     kaiju-mergeOutputs -i $RESULTS_PROFILING/kaiju/$POOL_NAME.refseq.sorted.out \
                     -j $RESULTS_PROFILING/kaiju/$POOL_NAME.fungi.sorted.out \
-                    -c 'lca' -t $DATABASE_DIR/kaiju/nodes.dmp \
+                    -c 'lca' -t $DATABASE_DIR/taxpasta/nodes.dmp \
+                    -o $RESULTS_PROFILING/kaiju/$POOL_NAME.refseq-fungi.out
+
+    kaiju-mergeOutputs -i $RESULTS_PROFILING/kaiju/$POOL_NAME.plasmid.sorted.out \
+                    -j $RESULTS_PROFILING/kaiju/$POOL_NAME.human.sorted.out \
+                    -c 'lca' -t $DATABASE_DIR/taxpasta/nodes.dmp \
+                    -o $RESULTS_PROFILING/kaiju/$POOL_NAME.human-plasmid.out
+
+
+    kaiju-mergeOutputs -i $RESULTS_PROFILING/kaiju/$POOL_NAME.human-plasmid.out \
+                    -j $RESULTS_PROFILING/kaiju/$POOL_NAME.refseq-fungi.out \
+                    -c 'lca' -t $DATABASE_DIR/taxpasta/nodes.dmp \
                     -o $RESULTS_PROFILING/kaiju/$POOL_NAME.merged.out
 
-    rm $RESULTS_PROFILING/kaiju/$POOL_NAME.refseq.out $RESULTS_PROFILING/kaiju/$POOL_NAME.fungi.out \
-       $RESULTS_PROFILING/kaiju/$POOL_NAME.refseq.sorted.out $RESULTS_PROFILING/kaiju/$POOL_NAME.fungi.sorted.out
 
-    kaiju2table -t $DATABASE_DIR/kaiju/nodes.dmp \
-                -n $DATABASE_DIR/kaiju/names.dmp \
+    echo "Creating table of $POOL_NAME..."
+    kaiju2table -t $DATABASE_DIR/taxpasta/nodes.dmp \
+                -n $DATABASE_DIR/taxpasta/names.dmp \
                 -r species \
                 -c 10 \
                 -e \
                 -p \
                 -o $RESULTS_PROFILING/kaiju/$POOL_NAME.summary.tsv \
                 $RESULTS_PROFILING/kaiju/$POOL_NAME.merged.out 
+
+    echo "Removing .out files of $POOL_NAME..."
+    rm $RESULTS_PROFILING/kaiju/$POOL_NAME.*.out
+   
 done
+
+
+
+
+
+
+
 
 
 
@@ -130,8 +174,8 @@ do
             --confidence $KRAKEN2_CONDIFENDE \
             --gzip-compressed \
             --paired \
-            $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz \
-            $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz 
+            $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.1.gz \
+            $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.2.gz
 
     gzip $RESULTS_PROFILING/kraken_2/$POOL_NAME.classified_1.fastq \
         $RESULTS_PROFILING/kraken_2/$POOL_NAME.classified_2.fastq \
@@ -141,53 +185,53 @@ done
 
 
 
-# CENTRIFUGE
-mkdir -p $RESULTS_PROFILING/centrifuge
-
-for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
-do 
-    echo "DOING SAMPLE $POOL_NAME WITH CENTRIFUGE!"
-    centrifuge \
-            -x $DATABASE_DIR/centrifuge/p+h+v \
-            -1 $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz \
-            -2 $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz \
-            -S  $RESULTS_PROFILING/centrifuge/$POOL_NAME.classification \
-            --report-file  $RESULTS_PROFILING/centrifuge/$POOL_NAME.report.txt \
-            --threads $NUM_CPUS --qc-filter --min-hitlen $MINIMUM_LENGTH 
-
-    centrifuge-kreport \
-        -x $DATABASE_DIR/centrifuge/p+h+v \
-        --min-length $MINIMUM_LENGTH \
-        $RESULTS_PROFILING/centrifuge/$POOL_NAME.classification >> $RESULTS_PROFILING/centrifuge/$POOL_NAME.kreport
-done
-
-
-for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
-do 
-
-done
-
 
 # KRAKENUNIQ
 mkdir -p $RESULTS_PROFILING/krakenuniq
-
+MAX_RAM=100
 for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
 do 
     echo "DOING SAMPLE $POOL_NAME WITH KRAKENUNIQ!"
     krakenuniq  -db $DATABASE_DIR/krakenuniq \
-                --preload \
-                --threads 8 \
+                --preload-size "$MAX_RAM"G \
+                --threads $NUM_CPUS \
                 --report-file $RESULTS_PROFILING/krakenuniq/$POOL_NAME.report \
                 --classified-out $RESULTS_PROFILING/krakenuniq/$POOL_NAME.classified.fastq \
                 --unclassified-out $RESULTS_PROFILING/krakenuniq/$POOL_NAME.unclassified.fastq \
                 --output $RESULTS_PROFILING/krakenuniq/$POOL_NAME.output \
-                --paired --hll-precision 14\
-                $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz \
-                $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz 
+                --paired --hll-precision 14 \
+                $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.1.gz \
+                $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.2.gz 
     
     gzip $RESULTS_PROFILING/krakenuniq/$POOL_NAME.classified.fastq \
         $RESULTS_PROFILING/krakenuniq/$POOL_NAME.unclassified.fastq 
 done
+
+
+
+
+
+
+# CENTRIFUGE
+mkdir -p $RESULTS_PROFILING/centrifuge
+
+for POOL_NAME in $(cat "$CWD/samples_profiling.txt" | tail -n 6)
+do 
+    echo "DOING SAMPLE $POOL_NAME WITH CENTRIFUGE!"
+    centrifuge \
+            -x $DATABASE_DIR/centrifuge/nt \
+            -1 $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.1.gz \
+            -2 $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.2.gz \
+            -S  $RESULTS_PROFILING/centrifuge/$POOL_NAME.classification \
+            --report-file  $RESULTS_PROFILING/centrifuge/$POOL_NAME.report.txt \
+            --threads 2 --qc-filter --min-hitlen $MINIMUM_LENGTH 
+
+    centrifuge-kreport \
+        -x $DATABASE_DIR/centrifuge/nt \
+        --min-length $MINIMUM_LENGTH \
+        $RESULTS_PROFILING/centrifuge/$POOL_NAME.classification >> $RESULTS_PROFILING/centrifuge/$POOL_NAME.kreport
+done
+
 
 
 
@@ -200,7 +244,7 @@ do
     echo "DOING SAMPLE $POOL_NAME WITH METAPHLAN!"
     metaphlan  $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz,$RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz \
             --input_type fastq \
-            --index mpa_vOct22_CHOCOPhlAnSGB_202212 \
+            --index $DATABASE_DIR/metaphlan/mpa_vOct22_CHOCOPhlAnSGB_202212 \
             -t rel_ab_w_read_stats \
             -o $RESULTS_PROFILING/metaphlan/$POOL_NAME.report.txt \
             --nproc $NUM_CPUS \
