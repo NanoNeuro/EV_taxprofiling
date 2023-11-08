@@ -1,9 +1,15 @@
-VERSION_ENSEMBLE_GENOME=109
+
+# DIRECTORIES
 CWD='/data/Proyectos/EVs'
-RESULTS_RNASEQ="$CWD/results_rnaseq"
-RESULTS_BOWTIE2="$CWD/results_bowtie2"
-RESULTS_PROFILING="$CWD/results_profiling"
+RESULTS_RNASEQ="$CWD/results_rnaseq/EM_EVPools"
+RESULTS_BOWTIE2="$CWD/results_bowtie2/EM_EVPools"
+RESULTS_PROFILING="$CWD/results_profiling/EM_EVPools"
+SAMPLES_FILE="$CWD/data/EM_EVPools/samples_rnaseq.csv"
+POOLS_FILE="$CWD/data/EM_EVPools/samples_profiling.txt"
 DATABASE_DIR="$CWD/database"
+
+# VERSIONS AND PC PARAMS
+VERSION_ENSEMBLE_GENOME=109
 NUM_CPUS=20
 MAX_RAM=85
 MAX_TIME='500.h'
@@ -27,7 +33,7 @@ nextflow run \
     -r 3.12.0 \
     -profile docker \
     -resume \
-    --input $CWD/samples_rnaseq.csv \
+    --input $SAMPLES_FILE \
     --outdir $RESULTS_RNASEQ \
     --aligner star_salmon \
     --skip_bbsplit \
@@ -51,7 +57,7 @@ bowtie2-build -f $DATABASE_DIR/genome/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna 
 
 mkdir $RESULTS_BOWTIE2
 
-for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
+for POOL_NAME in $(cat "$POOLS_FILE")
 do 
     echo "ALIGNING $POOL_NAME WITH BOWTIE2!"
     bowtie2 -x $DATABASE_DIR/genome/index/bowtie2-chm13/bowtie2-chm13 -1 $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz -2 $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz --very-sensitive -p $NUM_CPUS -S $RESULTS_BOWTIE2/$POOL_NAME.aligned.sam --un-conc-gz $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.gz
@@ -76,7 +82,7 @@ nextflow run \
 
 # KAIJU 
 mkdir -p $RESULTS_PROFILING/kaiju
-for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
+for POOL_NAME in $(cat "$POOLS_FILE")
 do 
     echo "DOING SAMPLE $POOL_NAME WITH KAIJU!"
 
@@ -162,7 +168,7 @@ done
 # KRAKEN 2
 mkdir -p $RESULTS_PROFILING/kraken_2
 
-for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
+for POOL_NAME in $(cat "$POOLS_FILE")
 do 
     echo "DOING SAMPLE $POOL_NAME WITH KRAKEN2!"
     kraken2 -db $DATABASE_DIR/kraken_2 \
@@ -191,7 +197,7 @@ done
 # KRAKENUNIQ
 mkdir -p $RESULTS_PROFILING/krakenuniq
 MAX_RAM=100
-for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
+for POOL_NAME in $(cat "$POOLS_FILE")
 do 
     echo "DOING SAMPLE $POOL_NAME WITH KRAKENUNIQ!"
     krakenuniq  -db $DATABASE_DIR/krakenuniq \
@@ -217,7 +223,7 @@ done
 # CENTRIFUGE
 mkdir -p $RESULTS_PROFILING/centrifuge
 
-for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
+for POOL_NAME in $(cat "$POOLS_FILE")
 do 
     echo "DOING SAMPLE $POOL_NAME WITH CENTRIFUGE!"
     centrifuge \
@@ -241,7 +247,7 @@ done
 
 
 # TAXPASTA
-for POOL_NAME in $(cat "$CWD/samples_profiling.txt")
+for POOL_NAME in $(cat "$POOLS_FILE")
 do
     # KRAKEN 2
     taxpasta standardise -p kraken2 --add-name --add-lineage --summarise-at genus --taxonomy $DATABASE_DIR/taxpasta \
