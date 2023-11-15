@@ -21,7 +21,7 @@ rm -r $DATABASE_DIR/genome/ncbi_dataset
 
 
 
-# Kaiju 
+# Kaiju [HUMAN | ARCHAEA | BACTERIA | VIRAL | PLASMID | PROTOZOA? | FUNGI]
 ## We will download specific databases (we tried to create one from scratch, but the identifiers in the FASTAs were not the taxon ID but the protein IDs and was a PITA to do the changes), 
 ## and we will also create a human one.
 mkdir -p $DATABASE_DIR/kaiju
@@ -73,11 +73,35 @@ tar xvf $DATABASE_DIR/krakenuniq/kuniq_standard_minus_kdb.20220616.tgz -C $DATAB
 
 
 
-# Centrifuge FROM https://ccb.jhu.edu/software/centrifuge/  [HUMAN | ARCHAEA? | BACTERIA | VIRAL | FUNGI?] - NCBI nucleotide non-redundant sequences
+# Centrifuge FROM https://ccb.jhu.edu/software/centrifuge/  [HUMAN | ARCHAEA | BACTERIA | VIRAL | FUNGI | PLASMID] - NCBI nucleotide non-redundant sequences
+# For this profiler, we are going to download/build three different indexes:
+# 1) p+h+v: it contains archea, bacteria, virus and human sequences
+# 2) f+g: it contains fungi and protozoa sequences
+# These two indexes are downloaded to run them separately. We decided not to build this index from scratch because the database
+# was too large to fit in memory
+# We will download a third index, the nt_2018 index, which contains several sequences from the NCBI nucleotide database. This index
+# will be used to create the kraken-like report by combining the classification reports using the 1) and 2) indexes separately.
+# We use this third index because it contains many taxons that are already in 1) and 2); but we don't use it for classification
+# because the index was sometimes too big to fit in the memory (depending on the number of CPUs), and it took too long to run.
+
+
 mkdir -p $DATABASE_DIR/centrifuge
+# THIS INDEX WAS TOO BIG
 aws s3 cp s3://genome-idx/centrifuge/nt_2018_3_3.tar.gz $DATABASE_DIR/centrifuge/nt_2018_3_3.tar.gz
 tar -xvf $DATABASE_DIR/centrifuge/nt_2018_3_3.tar.gz -C $DATABASE_DIR/centrifuge
 
+# We are going to download the human + archaea + bacteria + viral, and create a new index with fungi and protozoa
+aws s3 cp s3://genome-idx/centrifuge/p+h+v.tar.gz $DATABASE_DIR/centrifuge/p+h+v.tar.gz
+tar -xvf $DATABASE_DIR/centrifuge/p+h+v.tar.gz -C $DATABASE_DIR/centrifuge
+
+centrifuge-download -o taxonomy taxonomy
+centrifuge-download -o library -P $NUM_CPUS -m -d "fungi,protozoa" -a Any refseq > seqid2taxid.map
+
+cat library/*/*.fna > input-sequences.fna
+
+centrifuge-build -p $NUM_CPUS --conversion-table seqid2taxid.map \
+                 --taxonomy-tree taxonomy/nodes.dmp --name-table taxonomy/names.dmp \
+                 input-sequences.fna f+p
 
 
 
