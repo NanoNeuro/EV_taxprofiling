@@ -222,27 +222,36 @@ done
 
 # CENTRIFUGE
 mkdir -p $RESULTS_PROFILING/centrifuge
-
+NUM_CPUS=10
 for POOL_NAME in $(cat "$POOLS_FILE")
 do 
     echo "DOING SAMPLE $POOL_NAME WITH CENTRIFUGE!"
+    
+    echo "PHV"
     centrifuge \
-            -x $DATABASE_DIR/centrifuge/nt \
+            -x $DATABASE_DIR/centrifuge/p+h+v \
             -1 $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.1.gz \
             -2 $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.2.gz \
-            -S  $RESULTS_PROFILING/centrifuge/$POOL_NAME.classification \
+            -S  $RESULTS_PROFILING/centrifuge/$POOL_NAME.classification_HABV \
             --report-file  $RESULTS_PROFILING/centrifuge/$POOL_NAME.report.txt \
-            --threads $NUM_CPUS --mm --qc-filter --min-hitlen $MINIMUM_LENGTH 
+            --threads $NUM_CPUS --mm --qc-filter --min-hitlen $MINIMUM_LENGTH
+    
+    echo "FP"
+    centrifuge \
+            -x $DATABASE_DIR/centrifuge/f+p \
+            -1 $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.1.gz \
+            -2 $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.2.gz \
+            -S  $RESULTS_PROFILING/centrifuge/$POOL_NAME.classification_FP \
+            --report-file  $RESULTS_PROFILING/centrifuge/$POOL_NAME.report.txt \
+            --threads $NUM_CPUS --mm --qc-filter --min-hitlen $MINIMUM_LENGTH
 
+    echo "KREPORT"
     centrifuge-kreport \
         -x $DATABASE_DIR/centrifuge/nt \
         --min-length $MINIMUM_LENGTH \
-        $RESULTS_PROFILING/centrifuge/$POOL_NAME.classification >> $RESULTS_PROFILING/centrifuge/$POOL_NAME.kreport
+        $RESULTS_PROFILING/centrifuge/$POOL_NAME.classification_HABV \
+        $RESULTS_PROFILING/centrifuge/$POOL_NAME.classification_FP >> $RESULTS_PROFILING/centrifuge/$POOL_NAME.kreport
 done
-
-
-
-
 
 
 
@@ -265,7 +274,10 @@ do
     taxpasta standardise -p kaiju --add-name --add-lineage --summarise-at genus --taxonomy $DATABASE_DIR/taxpasta \
             -o $RESULTS_PROFILING/kaiju/$POOL_NAME.report.standardised --output-format tsv \
             $RESULTS_PROFILING/kaiju/$POOL_NAME.summary.tsv 
+done
 
+for POOL_NAME in $(cat "$POOLS_FILE")
+do
     # CENTRIFUGE 
     grep -vE "10213|2081514|640869|293847|1696033|197513|417449|1379869|537876|268309|1539973|578825|600669|55798|1823762|537875|543054|1940210|1920812|373436|1503934|33263|188782|297283|497890|137601|232365|1955842|119065|578822|186813|210592|78537|670506|663587|883878|548256|272201|2072718|227348|1540081|1652079|37811|186825|192420|40306|298052|211564|33260|187686|406602|1912917|218055|159511|406635|288398|3152|215449|33277|116167|6342|44327|80844|132680|404745|1937812|1955852|71241" \
     $RESULTS_PROFILING/centrifuge/$POOL_NAME.kreport > $RESULTS_PROFILING/centrifuge/$POOL_NAME.kreport.pretaxpasta
