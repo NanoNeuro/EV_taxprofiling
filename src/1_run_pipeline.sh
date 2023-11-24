@@ -1,11 +1,12 @@
 
 # DIRECTORIES
+PROJECT_NAME='artificial_reads'
 CWD='/data/Proyectos/EVs'
-RESULTS_RNASEQ="$CWD/results_rnaseq/EM_EVPools"
-RESULTS_BOWTIE2="$CWD/results_bowtie2/EM_EVPools"
-RESULTS_PROFILING="$CWD/results_profiling/EM_EVPools"
-SAMPLES_FILE="$CWD/data/EM_EVPools/samples_rnaseq.csv"
-POOLS_FILE="$CWD/data/EM_EVPools/samples_profiling.txt"
+RESULTS_RNASEQ="$CWD/results_rnaseq/$PROJECT_NAME"
+RESULTS_BOWTIE2="$CWD/results_bowtie2/$PROJECT_NAME"
+RESULTS_PROFILING="$CWD/results_profiling/$PROJECT_NAME"
+SAMPLES_FILE="$CWD/data/$PROJECT_NAME/samples_rnaseq.csv"
+POOLS_FILE="$CWD/data/$PROJECT_NAME/samples_profiling.txt"
 DATABASE_DIR="$CWD/database"
 
 # VERSIONS AND PC PARAMS
@@ -53,8 +54,6 @@ nextflow run \
 
 
 # 2nd RNA SEQ PIPELINE USING BOWTIE2 AND CHM13
-bowtie2-build -f $DATABASE_DIR/genome/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna $DATABASE_DIR/genome/index/bowtie2-chm13/bowtie2-chm13
-
 mkdir $RESULTS_BOWTIE2
 
 for POOL_NAME in $(cat "$POOLS_FILE")
