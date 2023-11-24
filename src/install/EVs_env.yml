@@ -39,6 +39,8 @@ dependencies:
   - diamond
   - fastp
   - nf-core
+  - insilicoseq
+  - biopython==1.78
   - pip:
       - umi_tools
       - pysam
