@@ -1,12 +1,19 @@
 #!/bin/bash
+# TODO! : METER REFS DE STAR; RSEM Y SALMON
+
+
 CWD='/data/Proyectos/EVs'
 DATABASE_DIR="$CWD/database"
 NUM_CPUS=20
 
-VERSION=109
-wget -L ftp://ftp.ensembl.org/pub/release-$VERSION/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz -P $DATABASE_DIR
-wget -L ftp://ftp.ensembl.org/pub/release-$VERSION/gtf/homo_sapiens/Homo_sapiens.GRCh38.$VERSION.gtf.gz -P $DATABASE_DIR
+mkdir -p $DATABASE_DIR/genome
 
+# Human hg38 genome for nf-core/rnaseq
+VERSION=109
+wget -L ftp://ftp.ensembl.org/pub/release-$VERSION/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz -P $DATABASE_DIR/genome
+wget -L ftp://ftp.ensembl.org/pub/release-$VERSION/gtf/homo_sapiens/Homo_sapiens.GRCh38.$VERSION.gtf.gz -P $DATABASE_DIR/genome
+gzip -d $DATABASE_DIR/genome/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz
+gzip -d $DATABASE_DIR/genome/Homo_sapiens.GRCh38.$VERSION.gtf.gz
 
 
 
@@ -16,7 +23,11 @@ curl -OJX GET "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/genome/accession/GC
 # Extract the .fna file!
 unzip $DATABASE_DIR/genome/GCF_009914755.1.zip -d $DATABASE_DIR/genome
 mv $DATABASE_DIR/genome/ncbi_dataset/data/GCF_009914755.1/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna $DATABASE_DIR/genome/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna
-rm -r $DATABASE_DIR/genome/ncbi_dataset
+rm -r $DATABASE_DIR/genome/ncbi_dataset $DATABASE_DIR/genome/GCF_009914755.1.zip
+
+mkdir -p $DATABASE_DIR/genome/index/bowtie2-chm13
+bowtie2-build -f $DATABASE_DIR/genome/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna $DATABASE_DIR/genome/index/bowtie2-chm13/bowtie2-chm13
+
 
 
 
@@ -111,3 +122,68 @@ mkdir -p $DATABASE_DIR/taxpasta
 wget ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz -O $DATABASE_DIR/taxpasta/taxdump.tar.gz
 
 tar xvf $DATABASE_DIR/taxpasta/taxdump.tar.gz -C $DATABASE_DIR/taxpasta/
+
+
+
+
+
+# CREATE RANDOM READ FASTQ FILES
+# We are going to create random reads using an artificial read generator, using reads from different species, as well as humans. 
+
+KINGDOM	    GENUS	SPECIES	                TAXID	RELATIVE ABUNDANCE (95% is human)	N READS
+Animal	    Homo	sapiens	                9606	0.95	47500000
+Bacteria	Cutibacterium	acnes	        1747	0.0075	375000
+Bacteria	Dietzia	maris	                37915	0.005	250000
+Bacteria	Bifidobacterium	bifidum	        1681	0.005	250000
+Bacteria	Lactobacillus	acidophilus	    1579	0.0025	125000
+Bacteria	Bacteroides	fragilis	        817 	0.0025	125000
+Bacteria	Roseburia	intestinalis	    166486	0.0025	125000
+Bacteria	Stenotrophomonas	maltophilia	40324	0.0015	75000
+Bacteria	Sphingomonas	paucimobilis	13689	0.0015	75000
+Bacteria	Taylorella	equigenitalis	    29575	0.001	50000
+Bacteria	Kinneretia	asaccharophila	    582607	0.0005	25000
+Fungi	    Aspergillus	chevalieri	        182096	0.005	250000
+Fungi	    Malassezia	restricta	        76775	0.0025	125000
+Fungi	    Saccharomyces	cerevisiae	    4932	0.0025	125000
+Fungi	    Plenodomus	lingam	            5022	0.0015	75000
+Fungi	    Alternaria	alternata	        5599	0.0015	75000
+Virus	    Burzaovirus	intestinihominis 	2955562	0.0025	125000
+Virus	    Elvirus	EL	                    1984787	0.0015	75000
+Virus	    Lentivirus	HIV1	            11676	0.0015	75000
+Virus	    Nickievirus	nickie	            2560688	0.0015	75000
+Virus	    Lymphocryptovirus	humangamma4	3050299	0.0005	25000
+
+
+
+
+ncbi-genome-download -F fasta -p $NUM_CPUS -r 10 -T "9606" -o $DATABASE_DIR/artificial_reads_genomes/9606 -R reference --flat-output all
+zcat $DATABASE_DIR/artificial_reads_genomes/9606/*.fna.gz > $DATABASE_DIR/artificial_reads_genomes/9606.fna
+
+for TAXID in "1747" "37915" "1681" "1579" "817" "166486" "40324" "13689" "29575" "582607" "182096" "76775" "4932" "5022" "5599" "2955562" "1984787" "11676" "2560688" "3050299"
+do  
+    echo $TAXID
+    ncbi-genome-download -F fasta -p $NUM_CPUS -r 10 -T "$TAXID" -o $DATABASE_DIR/artificial_reads_genomes/$TAXID --flat-output all
+    zcat $DATABASE_DIR/artificial_reads_genomes/$TAXID/*.fna.gz > $DATABASE_DIR/artificial_reads_genomes/$TAXID.fna
+    rm -rf $DATABASE_DIR/artificial_reads_genomes/$TAXID
+done
+
+
+TAXIDS=("9606" "1747" "37915" "1681" "1579" "817" "166486" "40324" "13689" "29575" "582607" "182096" "76775" "4932" "5022" "5599" "2955562" "1984787" "11676" "2560688" "3050299")
+LENGTHS=(47500000 375000 250000 250000 125000 125000 125000 75000 75000 50000 25000 250000 125000 125000 75000 75000 125000 75000 75000 75000 25000)
+NUM_CPUS=8
+for ((i = 0; i < ${#TAXIDS[@]}; i++)); do
+    TAXID="${TAXIDS[i]}"
+    LENGTH="${LENGTHS[i]}"
+    
+    # Perform actions with $NAME and $AGE
+    iss generate --genomes $DATABASE_DIR/artificial_reads_genomes/$TAXID.fna --model hiseq --output $DATABASE_DIR/artificial_reads_genomes/"$TAXID"_reads --cpus $NUM_CPUS --compress --n_reads $LENGTH --coverage lognormal
+done
+
+zcat $DATABASE_DIR/artificial_reads_genomes/*_reads_R1.fastq.gz > $DATABASE_DIR/artificial_reads_genomes/artificial_reads_R1.fastq
+gzip $DATABASE_DIR/artificial_reads_genomes/artificial_reads_R1.fastq
+zcat $DATABASE_DIR/artificial_reads_genomes/*_reads_R2.fastq.gz > $DATABASE_DIR/artificial_reads_genomes/artificial_reads_R2.fastq
+gzip $DATABASE_DIR/artificial_reads_genomes/artificial_reads_R2.fastq
+
+mkdir -p $CWD/data/artificial_reads
+cp $DATABASE_DIR/artificial_reads_genomes/artificial_reads_R1.fastq.gz $CWD/data/artificial_reads/artificial_reads_R1.fastq.gz
+cp $DATABASE_DIR/artificial_reads_genomes/artificial_reads_R2.fastq.gz $CWD/data/artificial_reads/artificial_reads_R2.fastq.gz
