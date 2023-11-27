@@ -191,8 +191,6 @@ done
 
 
 
-
-
 # KRAKENUNIQ
 mkdir -p $RESULTS_PROFILING/krakenuniq
 MAX_RAM=100
@@ -258,9 +256,10 @@ done
 for POOL_NAME in $(cat "$POOLS_FILE")
 do
     # KRAKEN 2
+    grep -vE "2952263|2627207|2952264" $RESULTS_PROFILING/kraken_2/$POOL_NAME.report > $RESULTS_PROFILING/kraken_2/$POOL_NAME.report.pretaxpasta
     taxpasta standardise -p kraken2 --add-name --add-lineage --summarise-at genus --taxonomy $DATABASE_DIR/taxpasta \
             -o $RESULTS_PROFILING/kraken_2/$POOL_NAME.report.standardised --output-format tsv \
-            $RESULTS_PROFILING/kraken_2/$POOL_NAME.report 
+            $RESULTS_PROFILING/kraken_2/$POOL_NAME.report.pretaxpasta
 
     # KRAKENUNIQ
     ## Remove a species that gives an error
