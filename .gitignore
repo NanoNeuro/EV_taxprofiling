@@ -1,11 +1,7 @@
 .nextflow*
-data/*/*/*.fastq.gz
-data/*/*.xlsx
-data/*/*.xlsx#
-data/*/*.csv
-data/*/*.txt
+data/
 results_*/*
 database/*
 work/*
 *.gbff.gz
-
+*.fastq.gz
