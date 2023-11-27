@@ -97,7 +97,7 @@ tar xvf $DATABASE_DIR/krakenuniq/kuniq_standard_minus_kdb.20220616.tgz -C $DATAB
 
 
 mkdir -p $DATABASE_DIR/centrifuge
-# THIS INDEX WAS TOO BIG
+# THIS INDEX WAS TOO BIG BUT WE NEED IT TO MERGE INDEXES
 aws s3 cp s3://genome-idx/centrifuge/nt_2018_3_3.tar.gz $DATABASE_DIR/centrifuge/nt_2018_3_3.tar.gz
 tar -xvf $DATABASE_DIR/centrifuge/nt_2018_3_3.tar.gz -C $DATABASE_DIR/centrifuge
 
@@ -105,6 +105,7 @@ tar -xvf $DATABASE_DIR/centrifuge/nt_2018_3_3.tar.gz -C $DATABASE_DIR/centrifuge
 aws s3 cp s3://genome-idx/centrifuge/p+h+v.tar.gz $DATABASE_DIR/centrifuge/p+h+v.tar.gz
 tar -xvf $DATABASE_DIR/centrifuge/p+h+v.tar.gz -C $DATABASE_DIR/centrifuge
 
+cd  $DATABASE_DIR/centrifuge
 centrifuge-download -o taxonomy taxonomy
 centrifuge-download -o library -P $NUM_CPUS -m -d "fungi,protozoa" -a Any refseq > seqid2taxid.map
 
