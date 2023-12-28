@@ -1,33 +1,11 @@
-
-# DIRECTORIES
-PROJECT_NAME='artificial_reads'
-CWD='/data/Proyectos/EVs'
-RESULTS_RNASEQ="$CWD/results_rnaseq/$PROJECT_NAME"
-RESULTS_BOWTIE2="$CWD/results_bowtie2/$PROJECT_NAME"
-RESULTS_PROFILING="$CWD/results_profiling/$PROJECT_NAME"
-SAMPLES_FILE="$CWD/data/$PROJECT_NAME/samples_rnaseq.csv"
-POOLS_FILE="$CWD/data/$PROJECT_NAME/samples_profiling.txt"
-DATABASE_DIR="$CWD/database"
-
-# VERSIONS AND PC PARAMS
-VERSION_ENSEMBLE_GENOME=109
-NUM_CPUS=20
-MAX_RAM=85
-MAX_TIME='500.h'
-
-# QUALITY PARAMS
-KRAKEN2_CONFIDENCE=0.90  # Standard: 0 [KRAKEN2]
-HLL_PRECISION=16         # Standard: 12 [KRAKENUNIQ]
-MINIMUM_LENGTH=41        # Standard: 11 [KAIJU], 22 [CENTRIFUGE]
-E_VALUE=0.0001           # Standard: 0.01 [KAIJU]
+# RUN VARS 
+source src/list_vars.sh
 
 
 # RNA SEQ PIPELINE - para mappear a humano
 # 1) -profile  usar docker y, como last resort, conda
 # 2) Incluir --star_index cuando se haya indexado por primera vez (HAY QUE MOVER EL ÍNDICE A LA CARPETA!!!)
 # We skip qualimap becau it gets to a timeout error and it is not really necessary for the analysis
-
-cd $CWD
 
 nextflow run \
     nf-core/rnaseq \
@@ -59,7 +37,12 @@ mkdir $RESULTS_BOWTIE2
 for POOL_NAME in $(cat "$POOLS_FILE")
 do 
     echo "ALIGNING $POOL_NAME WITH BOWTIE2!"
-    bowtie2 -x $DATABASE_DIR/genome/index/bowtie2-chm13/bowtie2-chm13 -1 $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz -2 $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz --very-sensitive -p $NUM_CPUS -S $RESULTS_BOWTIE2/$POOL_NAME.aligned.sam --un-conc-gz $RESULTS_BOWTIE2/$POOL_NAME.unaligned.fastq.gz
+    bowtie2 -x $DATABASE_DIR/genome/index/bowtie2-chm13/bowtie2-chm13 \
+            -1 $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_1.fastq.gz \
+            -2 $RESULTS_RNASEQ/star_salmon/unmapped/$POOL_NAME.unmapped_2.fastq.gz \
+            --very-sensitive -p $NUM_CPUS \
+            -S $RESULTS_BOWTIE2/$POOL_NAME.aligned.sam \
+            --un-conc-gz $RESULTS_BOWTIE2/$POOL_NAME.unmapped.fastq.gz
 done
 
 
@@ -160,10 +143,6 @@ done
 
 
 
-
-
-
-
 # KRAKEN 2
 mkdir -p $RESULTS_PROFILING/kraken_2
 
@@ -193,7 +172,7 @@ done
 
 # KRAKENUNIQ
 mkdir -p $RESULTS_PROFILING/krakenuniq
-MAX_RAM=100
+MAX_RAM=80
 for POOL_NAME in $(cat "$POOLS_FILE")
 do 
     echo "DOING SAMPLE $POOL_NAME WITH KRAKENUNIQ!"
@@ -256,14 +235,13 @@ done
 for POOL_NAME in $(cat "$POOLS_FILE")
 do
     # KRAKEN 2
-    grep -vE "2952263|2627207|2952264" $RESULTS_PROFILING/kraken_2/$POOL_NAME.report > $RESULTS_PROFILING/kraken_2/$POOL_NAME.report.pretaxpasta
+    grep -vE "2952263|2627207|2952264|2788421" $RESULTS_PROFILING/kraken_2/$POOL_NAME.report > $RESULTS_PROFILING/kraken_2/$POOL_NAME.report.pretaxpasta
     taxpasta standardise -p kraken2 --add-name --add-lineage --summarise-at genus --taxonomy $DATABASE_DIR/taxpasta \
             -o $RESULTS_PROFILING/kraken_2/$POOL_NAME.report.standardised --output-format tsv \
             $RESULTS_PROFILING/kraken_2/$POOL_NAME.report.pretaxpasta
 
     # KRAKENUNIQ
-    ## Remove a species that gives an error
-    grep -v "2927082" $RESULTS_PROFILING/krakenuniq/$POOL_NAME.report > $RESULTS_PROFILING/krakenuniq/$POOL_NAME.report.pretaxpasta
+    grep -vE "2743088|2116545|2315857|2646913|2489366|2704464|2749459|2927082|2788421|2591429|663587|2637697|2635552|600669" $RESULTS_PROFILING/krakenuniq/$POOL_NAME.report > $RESULTS_PROFILING/krakenuniq/$POOL_NAME.report.pretaxpasta
     taxpasta standardise -p krakenuniq --add-name --add-lineage --summarise-at genus --taxonomy $DATABASE_DIR/taxpasta \
             -o $RESULTS_PROFILING/krakenuniq/$POOL_NAME.report.standardised --output-format tsv \
             $RESULTS_PROFILING/krakenuniq/$POOL_NAME.report.pretaxpasta 
