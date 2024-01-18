@@ -46,3 +46,4 @@ dependencies:
       - pysam
       - cutadapt
       - docker
+      - openpyxl
