@@ -5,3 +5,4 @@ database/*
 work/*
 *.gbff.gz
 *.fastq.gz
+*/*.html
