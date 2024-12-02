@@ -1,8 +1,10 @@
 .nextflow*
 data/
-results_*/*
+results/
 database/*
 work/*
 *.gbff.gz
 *.fastq.gz
 */*.html
+database/
+previous_results/
