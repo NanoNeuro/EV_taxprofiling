@@ -8,3 +8,4 @@ work/*
 */*.html
 database/
 previous_results/
+*.pyc
