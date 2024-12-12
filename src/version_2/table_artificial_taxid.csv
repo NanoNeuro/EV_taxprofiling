@@ -1,61 +1,61 @@
-Homo sapiens;9606;80000000
-Cutibacterium acnes;1747;625000
-Lactobacillus acidophilus;1579;625000
-Bifidobacterium bifidum;1681;625000
-Akkermansia muciniphila;239935;625000
-Blautia coccoides;1532;625000
-Blautia luti;89014;625000
-Bacteroides ovatus;28116;625000
-Bacteroides intestinalis;329854;625000
-Bacteroides fragilis;817;625000
-Escherichia coli;511145;625000
-Dietzia lutea;546160;500000
-Ruthenibacterium lactatiformans;1550024;375000
-Faecalibacterium prausnitzii;853;375000
-Parabacteroides distasonis;823;375000
-Parabacteroides merdae;46503;375000
-Fusicatenibacter saccharivorans;1150298;375000
-Erysipelatoclostridium ramosum;1547;250000
-Streptococcus salivarius;1304;250000
-Hungatella hathewayi;154046;125000
-Eisenbergiella porci;2652274;125000
-Butyricimonas faecalis;2093856;125000
-Alistipes indistinctus;626932;125000
-Alistipes finegoldii;214856;125000
-Eubacterium callanderi;53442;125000
-Acidaminococcus intestini;187327;125000
-Aspergillus chevalieri;182096;400000
-Aspergillus flavus;5059;400000
-Saccharomyces cerevisiae;4932;400000
-Saccharomyces kudriavzevii;114524;400000
-Saccharomyces mikatae;114525;400000
-Candida albicans;5476;400000
-Candida dubliniensis;42374;400000
-Candida orthopsilosis;273371;400000
-Malassezia restricta;76775;300000
-Alternaria dauci;48095;300000
-Kazachstania africana;432096;200000
-Penicillium digitatum;36651;200000
-Pichia kudriavzevii;4909;100000
-Trichoderma asperellum;101201;100000
-Akanthomyces muscarius;2231603;100000
-Fusarium falciforme;195108;100000
-Eremothecium sinecaudum;45286;100000
-Cryptococcus decagattii;1859122;100000
-Kwoniella shandongensis;1734106;100000
-Puccinia triticina;208348;100000
-Tobacco mosaic virus;12242;500000
-Rotavirus A;28875;500000
-Rotavirus B;28876;500000
-Rotavirus C;36427;500000
-Bacteriophage P2;10679;400000
-Escherichia phage T4;10665;400000
-Human immunodeficiency virus 1;11676;400000
-Human adenovirus 7;108098;300000
-Hepatitis C virus;3052230;300000
-Bovine alphaherpesvirus 2;3050244;300000
-Human herpesvirus 4 type 2;3050299;300000
-Mimivirus terra2;1128151;200000
-Dengue virus;3052464;200000
-Norovirus GI;11983;100000
-Zaire ebolavirus;3052462;100000
+Homo sapiens;9606;40000000
+Cutibacterium acnes;1747;312500
+Lactobacillus acidophilus;1579;312500
+Bifidobacterium bifidum;1681;312500
+Akkermansia muciniphila;239935;312500
+Blautia coccoides;1532;312500
+Blautia luti;89014;312500
+Bacteroides ovatus;28116;312500
+Bacteroides intestinalis;329854;312500
+Bacteroides fragilis;817;312500
+Escherichia coli;511145;312500
+Dietzia lutea;546160;250000
+Ruthenibacterium lactatiformans;1550024;187500
+Faecalibacterium prausnitzii;853;187500
+Parabacteroides distasonis;823;187500
+Parabacteroides merdae;46503;187500
+Fusicatenibacter saccharivorans;1150298;187500
+Erysipelatoclostridium ramosum;1547;125000
+Streptococcus salivarius;1304;125000
+Hungatella hathewayi;154046;62500
+Eisenbergiella porci;2652274;62500
+Butyricimonas faecalis;2093856;62500
+Alistipes indistinctus;626932;62500
+Alistipes finegoldii;214856;62500
+Eubacterium callanderi;53442;62500
+Acidaminococcus intestini;187327;62500
+Aspergillus chevalieri;182096;200000
+Aspergillus flavus;5059;200000
+Saccharomyces cerevisiae;4932;200000
+Saccharomyces kudriavzevii;114524;200000
+Saccharomyces mikatae;114525;200000
+Candida albicans;5476;200000
+Candida dubliniensis;42374;200000
+Candida orthopsilosis;273371;200000
+Malassezia restricta;76775;150000
+Alternaria dauci;48095;150000
+Kazachstania africana;432096;100000
+Penicillium digitatum;36651;100000
+Pichia kudriavzevii;4909;50000
+Trichoderma asperellum;101201;50000
+Akanthomyces muscarius;2231603;50000
+Fusarium falciforme;195108;50000
+Eremothecium sinecaudum;45286;50000
+Cryptococcus decagattii;1859122;50000
+Kwoniella shandongensis;1734106;50000
+Puccinia triticina;208348;50000
+Tobacco mosaic virus;12242;250000
+Rotavirus A;28875;250000
+Rotavirus B;28876;250000
+Rotavirus C;36427;250000
+Bacteriophage P2;10679;200000
+Escherichia phage T4;10665;200000
+Human immunodeficiency virus 1;11676;200000
+Human adenovirus 7;108098;150000
+Hepatitis C virus;3052230;150000
+Bovine alphaherpesvirus 2;3050244;150000
+Human herpesvirus 4 type 2;3050299;150000
+Mimivirus terra2;1128151;100000
+Dengue virus;3052464;100000
+Norovirus GI;11983;50000
+Zaire ebolavirus;3052462;50000

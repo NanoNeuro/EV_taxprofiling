@@ -7,6 +7,6 @@ DIR_FIGURES = '../../results/figures'
 
 POOLS = [f'POOL{i}' for i in range(1, 13)]
 CONTROLS = ['ACIDOLA', 'BLACTIS']
-LIST_PROFILERS = ['centrifuge', 'ganon', 'kaiju', 'kmcp', 'kraken2', 'krakenuniq']
+LIST_PROFILERS = ['centrifuge', 'ganon', 'kaiju',  'kraken2', 'krakenuniq']
 
 DPI=300
