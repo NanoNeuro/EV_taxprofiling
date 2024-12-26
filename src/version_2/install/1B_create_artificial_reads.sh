@@ -18,7 +18,7 @@ do
     else
         echo "Warning: Skipping invalid line with missing fields: species=\"$species\", taxid=\"$taxid\", n_reads=\"$n_reads\""
     fi
-done < <(tr -d '\r' < $CWD/src/Table_taxID.csv)  # Ensure all lines are cleaned
+done < <(tr -d '\r' < $CWD/src/table_artificial_taxid.csv)  # Ensure all lines are cleaned
 
 for ((i = 0; i < ${#TAXIDS[@]}; i++)); do
     TAXID=${TAXIDS[i]}

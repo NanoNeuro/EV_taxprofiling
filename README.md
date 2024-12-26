@@ -1,11 +1,100 @@
-# Analysis of circular RNA from extracellular vesicles
+# A Proposed Workflow to Robustly Analyze Bacterial Transcripts in RNAseq Data from Extracellular Vesicles
 
+This project was created to analyze bacterial (or non-human in general) transcripts from RNA-seq data. The project is organized as follows:
 
-The structure of the repo is:
 ```
-data                         | .fastq files (raw or processed and relevant)
-database                     | Files necesary for database creation
-src                          | Source files   
+data/                                             | .fastq files (raw or processed and relevant) - The FASTQs used for the project are available
+database/                                         | Files necessary for database creation
+src/                                              | Source files   
 |                                               
--- install                   | Files to prepare the environment  
+-- version_2/                                     | This is the latest version  
+|    |
+|    -- install/                                  | Files to prepare the environment and run the profiling
+|    |   |
+|    |   -- build_pys/                            | Python scripts to create the necessary file for the generation of profiler DBs
+|    |   -- run_profilers/                        | Functions used to run profilers
+|    |   -- X_*.sh                                | bash scripts to run all the profilers
+|    |   -- list_vars.sh                          | List of variables used for the rest of .sh files in the folder.
+|    |   -- sample_processing_pipeline.sh         | This is the general sh file to run X_*.sh files from 0 to 2 (3 is excluded).
+|    -- sh_funcs/                                 | Derivative bash functions
+|    -- table_artificial_taxid.csv                | File with all information to create the in silico sample.   
+|    -- list_vars.py                              | List of variables used for the rest of .ipynb files
+|    -- X_*.ipynb                                 | Notebook files to run the analysis of the profiling
 ```
+
+## How to Run the Profiling
+
+### 1. Preparation
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/NanoNeuro/EV_taxprofiling.git
+   cd EV_taxprofiling/src/version_2/install
+   ```
+2. **Set Up the Environment**:
+   Install necessary dependencies for the project. You can create a conda environment using the provided `environment.yml` file (if available) or install the necessary packages manually.
+   ```bash
+   conda env create -f environment.yml  # Replace with your environment setup command if different
+   conda activate EV_taxprofiling
+   ```
+3. **Download the files**:
+    You can download the files used for this experiment from GEO database (GSE255317). You should download the fastq files into the `data/`. Maybe you need to rename them; you can do it as in `data/samples_rnaseq.csv`.
+    Also **feel free to adapt the code for your samples!!**
+
+### 2. Create the Profiler Database
+To create the profiler database, navigate to the `build_pys` directory and run the relevant Python scripts. This step prepares the required files for database generation.
+
+**You can adapt your scripts to include the profilers you deem necessary**.
+
+1. **Navigate to the `build_pys` Directory**:
+   ```bash
+   cd build_pys
+   ```
+2. **Run the Scripts**:
+   Execute the Python scripts to generate the necessary database files. Replace `<script_name>` with the actual script names provided in the folder.
+   ```bash
+   python <script_name>.py
+   ```
+
+3. **Stuff to consider**
+- The species are downloaded using this command: `ncbi-genome-download -F protein-fasta,fasta -p ${CPUS} -r 10 -P -l complete,chromosome -o ${BASEDIR_PROFILER_DB}/GENERAL/archaea  --flat-output -m ${BASEDIR_PROFILER_DB}/GENERAL/archaea/table_archaea.txt  archaea`.
+  This will download ~50k bateria and ~15k virus, which may be too much. You can change the `-l` parameter to include fewer species.
+- **The process to create certain DBs is resource extensive!** Maybe you need a powerful computer or an HPC to run this part. Unfortunately, the databases are so big that I cannot save them anywhere.
+
+### 3. Run the Profilers
+1. **Set Up Variables**:
+   Edit the `list_vars.sh` file to set any necessary variables for your analysis. Open it in a text editor and customize it as needed.
+   ```bash
+   nano list_vars.sh
+   ```
+   Save and exit.
+
+2. **Run the Bash Scripts**:
+   Execute the `.sh` scripts in the `run_profilers` directory to initiate the profiling process.
+   ```bash
+   bash X_<script_name>.sh
+   ```
+   Ensure you have the necessary permissions to run the scripts.
+   ```bash
+   chmod +x X_<script_name>.sh
+   ```
+
+3. **Monitor Progress**:
+   Profiling may take some time depending on the size of your dataset. Check the output logs for progress and troubleshoot any errors.
+
+## How to Run the Jupyter Notebooks
+
+### 1. Open and Execute Notebooks
+1. Select the desired notebook (e.g., `X_<notebook_name>.ipynb`).
+2. Follow the instructions within the notebook cells. Make sure to execute them in sequence.
+3. Edit the `list_vars.py` file as necessary to set variables for analysis, similar to the Bash workflow.
+
+
+## Cite us
+```
+ A proposed workflow to analyze bacterial transcripts in RNAseq from blood extracellular vesicles of people with Multiple Sclerosis
+Alex M. Ascensión, Miriam Gorostidi-Aicua, Ane Otaegui-Chivite, Ainhoa Alberro, Rocio del Carmen Bravo-Miana, Tamara Castillo-Trivino, Laura Moles, David Otaegui
+bioRxiv 2024.04.23.590754; doi: https://doi.org/10.1101/2024.04.23.590754 
+```
+
+
+

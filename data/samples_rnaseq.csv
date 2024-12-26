@@ -1,0 +1,16 @@
+sample,fastq_1,fastq_2,strandedness
+POOL1,data/POOL1_R1.fastq.gz,data/POOL1_R2.fastq.gz,auto
+POOL2,data/POOL2_R1.fastq.gz,data/POOL2_R2.fastq.gz,auto
+POOL3,data/POOL3_R1.fastq.gz,data/POOL3_R2.fastq.gz,auto
+POOL4,data/POOL4_R1.fastq.gz,data/POOL4_R2.fastq.gz,auto
+POOL5,data/POOL5_R1.fastq.gz,data/POOL5_R2.fastq.gz,auto
+POOL6,data/POOL6_R1.fastq.gz,data/POOL6_R2.fastq.gz,auto
+POOL7,data/POOL7_R1.fastq.gz,data/POOL7_R2.fastq.gz,auto
+POOL8,data/POOL8_R1.fastq.gz,data/POOL8_R2.fastq.gz,auto
+POOL9,data/POOL9_R1.fastq.gz,data/POOL9_R2.fastq.gz,auto
+POOL10,data/POOL10_R1.fastq.gz,data/POOL10_R2.fastq.gz,auto
+POOL11,data/POOL11_R1.fastq.gz,data/POOL11_R2.fastq.gz,auto
+POOL12,data/POOL12_R1.fastq.gz,data/POOL12_R2.fastq.gz,auto
+BLACTIS,data/BLACTIS_R1.fastq.gz,data/BLACTIS_R2.fastq.gz,forward
+ACIDOLA,data/ACIDOLA_R1.fastq.gz,data/ACIDOLA_R1.fastq.gz,forward
+ARTIFICIAL,data/artificial_reads_R1.fastq.gz,data/artificial_reads_R2.fastq.gz,auto
