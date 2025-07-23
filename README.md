@@ -105,7 +105,7 @@ All required intermediate files are downloadable from Zenodo [10.5281/zenodo.148
 ```
  A proposed workflow to analyze bacterial transcripts in RNAseq from blood extracellular vesicles of people with Multiple Sclerosis
 Alex M. Ascensión, Miriam Gorostidi-Aicua, Ane Otaegui-Chivite, Ainhoa Alberro, Rocio del Carmen Bravo-Miana, Tamara Castillo-Trivino, Laura Moles, David Otaegui
-bioRxiv 2024.04.23.590754; doi: https://doi.org/10.1101/2024.04.23.590754 
+Frontiers in Microbiology; doi: https://doi.org/10.3389/fmicb.2025.1486661
 ```
 
 
